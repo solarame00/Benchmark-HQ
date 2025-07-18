@@ -23,8 +23,6 @@ import {
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import {
-  ArrowDown,
-  ArrowUp,
   CheckCircle,
   Edit,
   Globe,
@@ -41,41 +39,110 @@ import {
 import { Skeleton } from './ui/skeleton';
 import { format } from 'date-fns';
 
-type SortProps = {
-  onSort: (field: keyof Benchmark) => void;
-  sortBy: keyof Benchmark | null;
-  sortDirection: 'asc' | 'desc';
-};
-
 type BenchmarkTableProps = {
   benchmarks: Benchmark[];
-  loading: boolean;
+  loading?: boolean;
   onEdit: (benchmark: Benchmark) => void;
   onDelete: (id: string) => void;
-} & SortProps;
+  isDetailsView?: boolean;
+};
 
-const SortableHeader = ({ children, field, ...sortProps }: { children: React.ReactNode, field: keyof Benchmark } & SortProps) => {
-    const { sortBy, sortDirection, onSort } = sortProps;
-    const isSorted = sortBy === field;
-    return (
-        <TableHead onClick={() => onSort(field)} className="cursor-pointer hover:bg-muted/50">
-            <div className="flex items-center gap-2">
-                {children}
-                {isSorted && (sortDirection === 'asc' ? <ArrowUp className="h-4 w-4" /> : <ArrowDown className="h-4 w-4" />)}
-            </div>
-        </TableHead>
-    );
-}
-
-export function BenchmarkTable({ benchmarks, loading, onEdit, onDelete, ...sortProps }: BenchmarkTableProps) {
+export function BenchmarkTable({ benchmarks, loading, onEdit, onDelete, isDetailsView = false }: BenchmarkTableProps) {
   
   const formatDate = (dateString: string | Date) => {
     try {
         const date = new Date(dateString);
-        return format(date, 'PP');
+        return format(date, 'PPpp');
     } catch {
         return 'N/A';
     }
+  }
+
+  const renderValue = (value: any) => {
+    if (typeof value === 'boolean') {
+      return value ? <CheckCircle className="h-5 w-5 text-green-500" /> : <XCircle className="h-5 w-5 text-red-500" />;
+    }
+    if (Array.isArray(value)) {
+      return (
+        <div className="flex flex-wrap gap-1">
+          {value.map((item, index) => <Badge key={index} variant="outline">{item}</Badge>)}
+        </div>
+      );
+    }
+    if (typeof value === 'string' && value.startsWith('http')) {
+        return <a href={value} target="_blank" rel="noopener noreferrer" className="hover:underline text-primary">{value}</a>
+    }
+    return value || 'N/A';
+  };
+  
+  const fieldLabels: Record<keyof Omit<Benchmark, 'id'>, string> = {
+    url: 'URL',
+    score: 'Score',
+    organicTraffic: 'Organic Traffic (K)',
+    countries: 'Countries',
+    startTimeline: 'Start Timeline',
+    paymentMethod: 'Payment Methods',
+    paymentRedirect: 'Payment Redirect',
+    offerTrial: 'Offers Trial?',
+    hasBlog: 'Has Blog?',
+    hasResellPanel: 'Has Resell Panel?',
+    pricing: 'Pricing',
+    connections: 'Connections',
+    notes: 'Notes',
+    tags: 'Tags',
+    lastUpdated: 'Last Updated',
+  };
+
+
+  if (isDetailsView && benchmarks.length > 0) {
+    const benchmark = benchmarks[0];
+    const entries = Object.entries(benchmark).filter(([key]) => key !== 'id') as [keyof Omit<Benchmark, 'id'>, any][];
+
+    return (
+      <div className="-mx-6 -mt-6 border-t">
+        <Table>
+          <TableBody>
+            {entries.map(([key, value]) => (
+              <TableRow key={key}>
+                <TableCell className="font-semibold w-1/4">{fieldLabels[key]}</TableCell>
+                <TableCell className="whitespace-pre-wrap">{key === 'lastUpdated' ? formatDate(value) : renderValue(value)}</TableCell>
+              </TableRow>
+            ))}
+             <TableRow>
+                <TableCell className="font-semibold">Actions</TableCell>
+                <TableCell>
+                    <div className="flex gap-2">
+                         <Button variant="outline" size="sm" onClick={() => onEdit(benchmark)}>
+                            <Edit className="mr-2 h-4 w-4" /> Edit
+                        </Button>
+                        <AlertDialog>
+                            <AlertDialogTrigger asChild>
+                                 <Button variant="destructive" size="sm">
+                                    <Trash2 className="mr-2 h-4 w-4" /> Delete
+                                </Button>
+                            </AlertDialogTrigger>
+                             <AlertDialogContent>
+                                <AlertDialogHeader>
+                                    <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+                                    <AlertDialogDescription>
+                                    This action cannot be undone. This will permanently delete the benchmark data for <span className="font-semibold">{benchmark.url}</span>.
+                                    </AlertDialogDescription>
+                                </AlertDialogHeader>
+                                <AlertDialogFooter>
+                                    <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                    <AlertDialogAction onClick={() => onDelete(benchmark.id)} className="bg-destructive hover:bg-destructive/90">
+                                    Delete
+                                    </AlertDialogAction>
+                                </AlertDialogFooter>
+                            </AlertDialogContent>
+                        </AlertDialog>
+                    </div>
+                </TableCell>
+             </TableRow>
+          </TableBody>
+        </Table>
+      </div>
+    );
   }
 
   return (
@@ -83,12 +150,12 @@ export function BenchmarkTable({ benchmarks, loading, onEdit, onDelete, ...sortP
       <Table>
         <TableHeader>
           <TableRow>
-            <SortableHeader field="url" {...sortProps}>Website</SortableHeader>
-            <SortableHeader field="score" {...sortProps}>Score</SortableHeader>
-            <SortableHeader field="organicTraffic" {...sortProps}>Traffic (K)</SortableHeader>
-            <SortableHeader field="offerTrial" {...sortProps}>Trial</SortableHeader>
+            <TableHead>Website</TableHead>
+            <TableHead>Score</TableHead>
+            <TableHead>Traffic (K)</TableHead>
+            <TableHead>Trial</TableHead>
             <TableHead>Tags</TableHead>
-            <SortableHeader field="lastUpdated" {...sortProps}>Last Updated</SortableHeader>
+            <TableHead>Last Updated</TableHead>
             <TableHead className="text-right">Actions</TableHead>
           </TableRow>
         </TableHeader>
@@ -115,7 +182,7 @@ export function BenchmarkTable({ benchmarks, loading, onEdit, onDelete, ...sortP
                     {b.score || 0}
                   </Badge>
                 </TableCell>
-                <TableCell>{b.organicTraffic || 0}K</TableCell>
+                <TableCell>{b.organicTraffic || 0}</TableCell>
                 <TableCell>
                   {b.offerTrial ? (
                     <CheckCircle className="h-5 w-5 text-green-500" />
@@ -125,7 +192,8 @@ export function BenchmarkTable({ benchmarks, loading, onEdit, onDelete, ...sortP
                 </TableCell>
                 <TableCell className="max-w-sm">
                     <div className="flex flex-wrap gap-1">
-                        {b.tags?.map((tag) => <Badge key={tag} variant="outline">{tag}</Badge>)}
+                        {b.tags?.slice(0, 3).map((tag) => <Badge key={tag} variant="outline">{tag}</Badge>)}
+                        {b.tags?.length > 3 && <Badge variant="outline">+{b.tags.length-3}</Badge>}
                     </div>
                 </TableCell>
                 <TableCell>{formatDate(b.lastUpdated)}</TableCell>

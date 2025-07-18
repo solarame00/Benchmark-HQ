@@ -5,11 +5,14 @@ import { useSearchParams } from 'next/navigation';
 import type { Benchmark, BenchmarkInput } from '@/lib/types';
 import { BenchmarkTable } from '@/components/benchmark-table';
 import { BenchmarkForm } from '@/components/benchmark-form';
+import { BenchmarkCard } from '@/components/benchmark-card';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
-import { PlusCircle, Search } from 'lucide-react';
+import { PlusCircle, Search, Table, X } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
 function DashboardContent() {
   const searchParams = useSearchParams();
@@ -18,10 +21,18 @@ function DashboardContent() {
   const [benchmarks, setBenchmarks] = useState<Benchmark[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
-  const [sortBy, setSortBy] = useState<{ field: keyof Benchmark, direction: 'asc' | 'desc' }>({ field: 'lastUpdated', direction: 'desc' });
+  const [activeBenchmark, setActiveBenchmark] = useState<Benchmark | null>(null);
+
+  const [filters, setFilters] = useState({
+    trial: 'all',
+    blog: 'all',
+    resell: 'all',
+  });
+  const [sortBy, setSortBy] = useState<keyof Benchmark | 'score-desc' | 'score-asc' | 'lastUpdated-desc'>('score-desc');
   
   const [showForm, setShowForm] = useState(false);
   const [editingBenchmark, setEditingBenchmark] = useState<Benchmark | null>(null);
+  const [viewMode, setViewMode] = useState<'cards' | 'table'>('cards');
 
   useEffect(() => {
     try {
@@ -37,7 +48,7 @@ function DashboardContent() {
   
   useEffect(() => {
     if (searchParams.get('showForm') === 'true') {
-        setShowForm(true);
+        handleAddNew();
     }
   }, [searchParams]);
 
@@ -50,25 +61,28 @@ function DashboardContent() {
   const handleAddNew = () => {
     setEditingBenchmark(null);
     setShowForm(true);
+    setActiveBenchmark(null);
   }
 
   const handleEdit = (benchmark: Benchmark) => {
     setEditingBenchmark(benchmark);
     setShowForm(true);
+    setActiveBenchmark(null);
   }
 
   const handleDelete = (id: string) => {
     setBenchmarks(prev => prev.filter(b => b.id !== id));
+    if (activeBenchmark?.id === id) {
+        setActiveBenchmark(null);
+    }
     toast({ title: 'Success', description: 'Benchmark deleted successfully.' });
   }
 
   const handleSave = (data: BenchmarkInput, id?: string) => {
     if (id) {
-      // Update
       setBenchmarks(prev => prev.map(b => b.id === id ? { ...b, ...data, lastUpdated: new Date().toISOString() } : b));
       toast({ title: 'Success', description: 'Benchmark updated successfully.' });
     } else {
-      // Add new
       const newBenchmark: Benchmark = {
         id: new Date().toISOString(),
         ...data,
@@ -83,38 +97,40 @@ function DashboardContent() {
 
   const filteredAndSortedBenchmarks = useMemo(() => {
     let filtered = benchmarks.filter((b) =>
-      b.url.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      (b.url.toLowerCase().includes(searchTerm.toLowerCase()) ||
       b.notes?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      b.tags?.some(t => t.toLowerCase().includes(searchTerm.toLowerCase()))
+      b.tags?.some(t => t.toLowerCase().includes(searchTerm.toLowerCase()))) &&
+      (filters.trial === 'all' || (filters.trial === 'yes' ? b.offerTrial : !b.offerTrial)) &&
+      (filters.blog === 'all' || (filters.blog === 'yes' ? b.hasBlog : !b.hasBlog)) &&
+      (filters.resell === 'all' || (filters.resell === 'yes' ? b.hasResellPanel : !b.hasResellPanel))
     );
 
-    if (sortBy.field) {
-      filtered.sort((a, b) => {
-        const aValue = a[sortBy.field];
-        const bValue = b[sortBy.field];
-
-        if (aValue === undefined || aValue === null) return 1;
-        if (bValue === undefined || bValue === null) return -1;
-        
-        let comparison = 0;
-        if (typeof aValue === 'number' && typeof bValue === 'number') {
-          comparison = aValue - bValue;
-        } else if (typeof aValue === 'string' && typeof bValue === 'string') {
-          comparison = aValue.localeCompare(bValue);
+    filtered.sort((a, b) => {
+        switch (sortBy) {
+            case 'score-desc':
+                return (b.score || 0) - (a.score || 0);
+            case 'score-asc':
+                return (a.score || 0) - (b.score || 0);
+            case 'lastUpdated-desc':
+                return new Date(b.lastUpdated).getTime() - new Date(a.lastUpdated).getTime();
+            default:
+                return 0;
         }
-        
-        return sortBy.direction === 'asc' ? comparison : -comparison;
-      });
-    }
+    });
 
     return filtered;
-  }, [benchmarks, searchTerm, sortBy]);
-  
-  const handleSort = (field: keyof Benchmark) => {
-    setSortBy(prev => ({
-        field,
-        direction: prev.field === field && prev.direction === 'desc' ? 'asc' : 'desc'
-    }));
+  }, [benchmarks, searchTerm, sortBy, filters]);
+
+  const handleCardClick = (benchmark: Benchmark) => {
+    if (activeBenchmark?.id === benchmark.id) {
+        setActiveBenchmark(null);
+    } else {
+        setActiveBenchmark(benchmark);
+    }
+  }
+
+  const handleSortChange = (value: string) => {
+    setSortBy(value as any);
   }
 
   if (showForm) {
@@ -144,34 +160,121 @@ function DashboardContent() {
 
   return (
     <div className="flex flex-col gap-4">
-      <div className="flex items-center justify-between">
+      <div className="flex items-center justify-between gap-4 flex-wrap">
         <h1 className="text-2xl font-bold tracking-tight">All Benchmarks</h1>
-        <Button onClick={handleAddNew}>
-          <PlusCircle className="mr-2 h-4 w-4" />
-          Add New Benchmark
-        </Button>
+        <div className="flex items-center gap-2">
+            <ToggleGroup type="single" value={viewMode} onValueChange={(value) => value && setViewMode(value as any)}>
+                 <ToggleGroupItem value="cards" aria-label="Card view">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-4 w-4"><rect width="18" height="18" x="3" y="3" rx="2"/><path d="M3 9h18"/><path d="M9 21V9"/></svg>
+                 </ToggleGroupItem>
+                 <ToggleGroupItem value="table" aria-label="Table view">
+                    <Table className="h-4 w-4" />
+                 </ToggleGroupItem>
+            </ToggleGroup>
+            <Button onClick={handleAddNew}>
+            <PlusCircle className="mr-2 h-4 w-4" />
+            Add New
+            </Button>
+        </div>
       </div>
 
-      <div className="relative">
-        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-        <Input
-          type="search"
-          placeholder="Search by URL, notes, or tags..."
-          className="w-full pl-9"
-          value={searchTerm}
-          onChange={(e) => setSearchTerm(e.target.value)}
+       <Card>
+            <CardContent className="p-4 space-y-4">
+                 <div className="flex flex-col md:flex-row gap-4">
+                    <div className="relative flex-grow">
+                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                        <Input
+                        type="search"
+                        placeholder="Search by URL, notes, or tags..."
+                        className="w-full pl-9"
+                        value={searchTerm}
+                        onChange={(e) => setSearchTerm(e.target.value)}
+                        />
+                    </div>
+                    <Select onValueChange={handleSortChange} defaultValue={sortBy}>
+                        <SelectTrigger className="w-full md:w-[180px]">
+                            <SelectValue placeholder="Sort by" />
+                        </SelectTrigger>
+                        <SelectContent>
+                            <SelectItem value="score-desc">Score: High to Low</SelectItem>
+                            <SelectItem value="score-asc">Score: Low to High</SelectItem>
+                            <SelectItem value="lastUpdated-desc">Last Updated</SelectItem>
+                        </SelectContent>
+                    </Select>
+                </div>
+                 <div className="flex flex-col md:flex-row gap-4 items-center">
+                    <span className="text-sm font-medium">Filters:</span>
+                    <ToggleGroup type="single" value={filters.trial} onValueChange={(value) => value && setFilters(f => ({...f, trial: value}))} size="sm">
+                        <ToggleGroupItem value="all">All Trials</ToggleGroupItem>
+                        <ToggleGroupItem value="yes">Has Trial</ToggleGroupItem>
+                        <ToggleGroupItem value="no">No Trial</ToggleGroupItem>
+                    </ToggleGroup>
+                    <ToggleGroup type="single" value={filters.blog} onValueChange={(value) => value && setFilters(f => ({...f, blog: value}))} size="sm">
+                        <ToggleGroupItem value="all">All Blogs</ToggleGroupItem>
+                        <ToggleGroupItem value="yes">Has Blog</ToggleGroupItem>
+                        <ToggleGroupItem value="no">No Blog</ToggleGroupItem>
+                    </ToggleGroup>
+                 </div>
+            </CardContent>
+       </Card>
+
+      {viewMode === 'cards' && (
+        <>
+            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+            {loading ? (
+                Array.from({ length: 8 }).map((_, i) => <Card key={i} className="h-48 animate-pulse bg-muted/50" />)
+            ) : filteredAndSortedBenchmarks.length > 0 ? (
+                filteredAndSortedBenchmarks.map((b) => (
+                <BenchmarkCard
+                    key={b.id}
+                    benchmark={b}
+                    isActive={activeBenchmark?.id === b.id}
+                    onClick={() => handleCardClick(b)}
+                    onEdit={handleEdit}
+                    onDelete={onDelete}
+                />
+                ))
+            ) : (
+                <div className="col-span-full text-center py-12">
+                    <p>No benchmarks found. Try adjusting your filters or adding a new one.</p>
+                </div>
+            )}
+            </div>
+            
+            {activeBenchmark && (
+                <Card>
+                    <CardHeader>
+                        <div className="flex justify-between items-start">
+                             <div>
+                                <CardTitle>Full Details</CardTitle>
+                                <CardDescription>{activeBenchmark.url}</CardDescription>
+                             </div>
+                            <Button variant="ghost" size="icon" onClick={() => setActiveBenchmark(null)}>
+                                <X className="h-4 w-4" />
+                            </Button>
+                        </div>
+                    </CardHeader>
+                    <CardContent>
+                        <BenchmarkTable
+                            benchmarks={[activeBenchmark]}
+                            onEdit={handleEdit}
+                            onDelete={handleDelete}
+                            isDetailsView={true}
+                        />
+                    </CardContent>
+                </Card>
+            )}
+        </>
+      )}
+
+      {viewMode === 'table' && (
+         <BenchmarkTable
+            benchmarks={filteredAndSortedBenchmarks}
+            loading={loading}
+            onEdit={handleEdit}
+            onDelete={handleDelete}
         />
-      </div>
-
-      <BenchmarkTable
-        benchmarks={filteredAndSortedBenchmarks}
-        loading={loading}
-        onSort={handleSort}
-        sortBy={sortBy.field}
-        sortDirection={sortBy.direction}
-        onEdit={handleEdit}
-        onDelete={handleDelete}
-      />
+      )}
     </div>
   );
 }

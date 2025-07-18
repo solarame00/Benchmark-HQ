@@ -1,37 +1,6 @@
-'use client';
-
-import { useState, useEffect, useMemo } from 'react';
-import type { Benchmark } from '@/lib/types';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import { Bar, BarChart, CartesianGrid, XAxis, YAxis, Tooltip, Legend, ResponsiveContainer } from 'recharts';
-import { Skeleton } from '@/components/ui/skeleton';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 
 export default function StatsPage() {
-  const [benchmarks, setBenchmarks] = useState<Benchmark[]>([]);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-     try {
-      const storedBenchmarks = localStorage.getItem('benchmarks');
-      if (storedBenchmarks) {
-        const parsedBenchmarks: Benchmark[] = JSON.parse(storedBenchmarks);
-        parsedBenchmarks.sort((a, b) => (b.score || 0) - (a.score || 0));
-        setBenchmarks(parsedBenchmarks);
-      }
-    } catch (error) {
-      console.error("Failed to load benchmarks from local storage", error);
-    }
-    setLoading(false);
-  }, []);
-
-  const chartData = useMemo(() => {
-    return benchmarks.map(b => ({
-      name: b.url ? (new URL(b.url)).hostname.replace('www.', '') : 'N/A',
-      Score: b.score,
-      Traffic: b.organicTraffic
-    }));
-  }, [benchmarks]);
-
   return (
     <div className="flex flex-col gap-4">
         <div className="flex items-center justify-between">
@@ -40,35 +9,10 @@ export default function StatsPage() {
 
         <Card>
             <CardHeader>
-                <CardTitle>Score vs. Organic Traffic</CardTitle>
-                <CardDescription>
-                    A visual comparison of website scores against their monthly organic traffic.
-                </CardDescription>
+                <CardTitle>Feature Not Available</CardTitle>
             </CardHeader>
             <CardContent>
-                {loading ? (
-                    <Skeleton className="h-[400px] w-full" />
-                ) : (
-                    <div className="h-[400px] w-full">
-                        <ResponsiveContainer width="100%" height="100%">
-                            <BarChart data={chartData} margin={{ top: 5, right: 20, left: -10, bottom: 5 }}>
-                                <CartesianGrid strokeDasharray="3 3" />
-                                <XAxis dataKey="name" angle={-45} textAnchor="end" height={80} interval={0} stroke="hsl(var(--muted-foreground))" fontSize={12} />
-                                <YAxis yAxisId="left" orientation="left" stroke="hsl(var(--primary))" />
-                                <YAxis yAxisId="right" orientation="right" stroke="hsl(var(--accent))" />
-                                <Tooltip
-                                    contentStyle={{
-                                        backgroundColor: 'hsl(var(--background))',
-                                        borderColor: 'hsl(var(--border))'
-                                    }}
-                                />
-                                <Legend />
-                                <Bar yAxisId="left" dataKey="Score" fill="hsl(var(--primary))" radius={[4, 4, 0, 0]} />
-                                <Bar yAxisId="right" dataKey="Traffic" fill="hsl(var(--accent))" radius={[4, 4, 0, 0]} />
-                            </BarChart>
-                        </ResponsiveContainer>
-                    </div>
-                )}
+                <p>This feature has been removed from the current version of the application.</p>
             </CardContent>
         </Card>
     </div>

@@ -1,6 +1,6 @@
 import { SidebarProvider, Sidebar, SidebarTrigger, SidebarHeader, SidebarContent, SidebarMenu, SidebarMenuItem, SidebarMenuButton, SidebarInset } from '@/components/ui/sidebar';
 import Link from 'next/link';
-import { BarChart3, GitCompare, Home, PlusSquare } from 'lucide-react';
+import { Home, PlusSquare } from 'lucide-react';
 import { AppLogo } from '@/components/icons';
 
 export default function AppLayout({ children }: { children: React.ReactNode }) {
@@ -28,22 +28,6 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
                             <Link href="/?showForm=true">
                                 <PlusSquare />
                                 <span>Add New</span>
-                            </Link>
-                        </SidebarMenuButton>
-                    </SidebarMenuItem>
-                    <SidebarMenuItem>
-                        <SidebarMenuButton asChild tooltip="Compare">
-                            <Link href="/compare">
-                                <GitCompare />
-                                <span>Compare</span>
-                            </Link>
-                        </SidebarMenuButton>
-                    </SidebarMenuItem>
-                    <SidebarMenuItem>
-                        <SidebarMenuButton asChild tooltip="Stats">
-                            <Link href="/stats">
-                                <BarChart3 />
-                                <span>Stats</span>
                             </Link>
                         </SidebarMenuButton>
                     </SidebarMenuItem>

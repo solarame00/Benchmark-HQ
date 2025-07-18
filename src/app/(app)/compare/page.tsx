@@ -9,10 +9,10 @@ export default function ComparePage() {
 
         <Card>
             <CardHeader>
-                <CardTitle>Feature Coming Soon</CardTitle>
+                <CardTitle>Feature Not Available</CardTitle>
             </CardHeader>
             <CardContent>
-                <p>The ability to select and visually compare multiple benchmarks side-by-side will be available in a future update.</p>
+                <p>This feature has been removed from the current version of the application.</p>
             </CardContent>
         </Card>
     </div>
