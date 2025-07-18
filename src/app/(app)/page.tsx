@@ -231,7 +231,7 @@ function DashboardContent() {
                     isActive={activeBenchmark?.id === b.id}
                     onClick={() => handleCardClick(b)}
                     onEdit={handleEdit}
-                    onDelete={onDelete}
+                    onDelete={handleDelete}
                 />
                 ))
             ) : (
