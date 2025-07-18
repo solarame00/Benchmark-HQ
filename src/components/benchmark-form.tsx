@@ -1,3 +1,4 @@
+
 'use client';
 
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -51,15 +52,15 @@ export function BenchmarkForm({ benchmark, onSave, onCancel }: BenchmarkFormProp
     defaultValues: benchmark
       ? {
           ...benchmark,
-          score: benchmark.score || undefined,
-          organicTraffic: benchmark.organicTraffic || undefined,
+          score: benchmark.score || '',
+          organicTraffic: benchmark.organicTraffic || '',
           countries: benchmark.countries?.join('\n') || '',
           tags: benchmark.tags?.join(', ') || '',
         }
       : {
           url: '',
-          score: undefined,
-          organicTraffic: undefined,
+          score: '',
+          organicTraffic: '',
           countries: '',
           startTimeline: '',
           paymentMethod: '',
