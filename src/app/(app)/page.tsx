@@ -25,6 +25,9 @@ export default function DashboardPage() {
       } as Benchmark));
       setBenchmarks(benchmarksData);
       setLoading(false);
+    }, (error) => {
+        console.error("Error fetching benchmarks: ", error);
+        setLoading(false);
     });
 
     return () => unsubscribe();
@@ -101,5 +104,3 @@ export default function DashboardPage() {
     </div>
   );
 }
-
-    

@@ -90,8 +90,8 @@ export function BenchmarkTable({ benchmarks, loading, ...sortProps }: { benchmar
           <TableRow>
             <SortableHeader field="url" {...sortProps}>Website</SortableHeader>
             <SortableHeader field="score" {...sortProps}>Score</SortableHeader>
-            <SortableHeader field="organicSearchTraffic" {...sortProps}>Traffic (K)</SortableHeader>
-            <SortableHeader field="trialOffered" {...sortProps}>Trial</SortableHeader>
+            <SortableHeader field="organicTraffic" {...sortProps}>Traffic (K)</SortableHeader>
+            <SortableHeader field="offerTrial" {...sortProps}>Trial</SortableHeader>
             <TableHead>Tags</TableHead>
             <SortableHeader field="lastUpdated" {...sortProps}>Last Updated</SortableHeader>
             <TableHead className="text-right">Actions</TableHead>
@@ -120,9 +120,9 @@ export function BenchmarkTable({ benchmarks, loading, ...sortProps }: { benchmar
                     {b.score}
                   </Badge>
                 </TableCell>
-                <TableCell>{b.organicSearchTraffic}K</TableCell>
+                <TableCell>{b.organicTraffic}K</TableCell>
                 <TableCell>
-                  {b.trialOffered ? (
+                  {b.offerTrial ? (
                     <CheckCircle className="h-5 w-5 text-green-500" />
                   ) : (
                     <XCircle className="h-5 w-5 text-red-500" />
@@ -187,5 +187,3 @@ export function BenchmarkTable({ benchmarks, loading, ...sortProps }: { benchmar
     </div>
   );
 }
-
-    

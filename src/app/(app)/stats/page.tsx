@@ -21,6 +21,9 @@ export default function StatsPage() {
       } as Benchmark));
       setBenchmarks(benchmarksData);
       setLoading(false);
+    }, (error) => {
+        console.error("Error fetching benchmarks for stats: ", error);
+        setLoading(false);
     });
 
     return () => unsubscribe();
@@ -30,7 +33,7 @@ export default function StatsPage() {
     return benchmarks.map(b => ({
       name: (new URL(b.url)).hostname.replace('www.', ''),
       Score: b.score,
-      Traffic: b.organicSearchTraffic
+      Traffic: b.organicTraffic
     }));
   }, [benchmarks]);
 
@@ -76,5 +79,3 @@ export default function StatsPage() {
     </div>
   );
 }
-
-    

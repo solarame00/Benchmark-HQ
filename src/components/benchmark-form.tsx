@@ -27,15 +27,15 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from './ui/
 const formSchema = z.object({
   url: z.string().url({ message: 'Please enter a valid URL.' }),
   score: z.coerce.number().min(0).max(10),
-  organicSearchTraffic: z.coerce.number().min(0, { message: 'Traffic must be a positive number.' }),
+  organicTraffic: z.coerce.number().min(0, { message: 'Traffic must be a positive number.' }),
   countries: z.string().min(1, { message: 'Please enter at least one country.' }),
   startTimeline: z.string(),
-  paymentMethods: z.string(),
-  paymentRedirectionUrl: z.string().url({ message: 'Please enter a valid URL.' }).optional().or(z.literal('')),
-  trialOffered: z.boolean().default(false),
-  blogPresence: z.boolean().default(false),
-  resellPanelAvailable: z.boolean().default(false),
-  prices: z.string(),
+  paymentMethod: z.string(),
+  paymentRedirect: z.string().url({ message: 'Please enter a valid URL.' }).optional().or(z.literal('')),
+  offerTrial: z.boolean().default(false),
+  hasBlog: z.boolean().default(false),
+  hasResellPanel: z.boolean().default(false),
+  pricing: z.string(),
   connections: z.string(),
   notes: z.string().optional(),
   tags: z.string().optional(),
@@ -57,23 +57,22 @@ export function BenchmarkForm({ benchmark }: BenchmarkFormProps) {
       ? {
           ...benchmark,
           score: benchmark.score || 0,
-          organicSearchTraffic: benchmark.organicSearchTraffic || 0,
+          organicTraffic: benchmark.organicTraffic || 0,
           countries: benchmark.countries?.join('\n') || '',
-          paymentMethods: benchmark.paymentMethods?.join('\n') || '',
           tags: benchmark.tags?.join(', ') || '',
         }
       : {
           url: '',
           score: 5,
-          organicSearchTraffic: 0,
+          organicTraffic: 0,
           countries: '',
           startTimeline: '',
-          paymentMethods: '',
-          paymentRedirectionUrl: '',
-          trialOffered: false,
-          blogPresence: false,
-          resellPanelAvailable: false,
-          prices: '',
+          paymentMethod: '',
+          paymentRedirect: '',
+          offerTrial: false,
+          hasBlog: false,
+          hasResellPanel: false,
+          pricing: '',
           connections: '',
           notes: '',
           tags: '',
@@ -82,17 +81,24 @@ export function BenchmarkForm({ benchmark }: BenchmarkFormProps) {
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
     setIsSubmitting(true);
+    const toastId = toast({
+      title: 'Saving...',
+      description: 'Your benchmark is being saved.',
+    }).id;
+
     try {
       if (benchmark) {
         await updateBenchmark(benchmark.id, values);
-        toast({ title: 'Success', description: 'Benchmark updated successfully.' });
+        toast({ id: toastId, title: 'Success!', description: 'Benchmark updated successfully.' });
+        // No redirect on update, stay on the page
       } else {
         await addBenchmark(values);
-        toast({ title: 'Success', description: 'Benchmark added successfully.' });
+        toast({ id: toastId, title: 'Success!', description: 'Benchmark added successfully.' });
         router.push('/');
       }
     } catch (error) {
       toast({
+        id: toastId,
         variant: 'destructive',
         title: 'Error',
         description: error instanceof Error ? error.message : 'An unknown error occurred.',
@@ -111,12 +117,18 @@ export function BenchmarkForm({ benchmark }: BenchmarkFormProps) {
     setIsAiLoading(true);
     try {
       const result = await summarizeWebsite({ url });
-      form.setValue('notes', result.summary, { shouldValidate: true });
-      form.setValue('paymentMethods', result.paymentMethods.join('\n'), { shouldValidate: true });
-      form.setValue('trialOffered', result.trialOffered, { shouldValidate: true });
-      form.setValue('blogPresence', result.blogPresence, { shouldValidate: true });
-      form.setValue('countries', result.countries.join('\n'), { shouldValidate: true });
-      toast({ title: 'AI Autofill Complete', description: 'The form has been pre-filled with AI-detected values.' });
+      if (result) {
+        form.setValue('notes', result.summary, { shouldValidate: true });
+        form.setValue('paymentMethod', result.paymentMethods.join('\n'), { shouldValidate: true });
+        form.setValue('offerTrial', result.trialOffered, { shouldValidate: true });
+        form.setValue('hasBlog', result.blogPresence, { shouldValidate: true });
+        form.setValue('countries', result.countries.join('\n'), { shouldValidate: true });
+        if (result.organicSearchTraffic) form.setValue('organicTraffic', result.organicSearchTraffic, { shouldValidate: true });
+        if (result.resellPanelAvailable) form.setValue('hasResellPanel', result.resellPanelAvailable, { shouldValidate: true });
+        if (result.prices) form.setValue('pricing', result.prices, { shouldValidate: true });
+        if (result.connections) form.setValue('connections', result.connections, { shouldValidate: true });
+        toast({ title: 'AI Autofill Complete', description: 'The form has been pre-filled with AI-detected values.' });
+      }
     } catch (error) {
       toast({
         variant: 'destructive',
@@ -171,7 +183,7 @@ export function BenchmarkForm({ benchmark }: BenchmarkFormProps) {
                 </FormItem>
               )}
             />
-            <FormField control={form.control} name="organicSearchTraffic" render={({ field }) => (
+            <FormField control={form.control} name="organicTraffic" render={({ field }) => (
                 <FormItem>
                   <FormLabel>Organic Search Traffic (in K)</FormLabel>
                   <FormControl><Input type="number" {...field} /></FormControl>
@@ -191,20 +203,20 @@ export function BenchmarkForm({ benchmark }: BenchmarkFormProps) {
                 </FormItem>
               )}
             />
-            <FormField control={form.control} name="paymentMethods" render={({ field }) => (
+            <FormField control={form.control} name="paymentMethod" render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Payment Methods</FormLabel>
+                  <FormLabel>Payment Method(s)</FormLabel>
                   <FormControl><Textarea placeholder="Stripe&#10;PayPal&#10;Crypto" {...field} /></FormControl>
-                  <FormDescription>Enter one payment method per line.</FormDescription>
+                   <FormDescription>Enter one payment method per line.</FormDescription>
                   <FormMessage />
                 </FormItem>
               )}
             />
           </div>
 
-          <FormField control={form.control} name="paymentRedirectionUrl" render={({ field }) => (
+          <FormField control={form.control} name="paymentRedirect" render={({ field }) => (
               <FormItem>
-                <FormLabel>Payment Redirection URL</FormLabel>
+                <FormLabel>Payment Redirect URL</FormLabel>
                 <FormControl><Input placeholder="https://checkout.example.com" {...field} /></FormControl>
                 <FormMessage />
               </FormItem>
@@ -212,23 +224,23 @@ export function BenchmarkForm({ benchmark }: BenchmarkFormProps) {
           />
 
           <div className="grid md:grid-cols-3 gap-6">
-            <FormField control={form.control} name="trialOffered" render={({ field }) => (
+            <FormField control={form.control} name="offerTrial" render={({ field }) => (
                 <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
-                  <div className="space-y-0.5"><FormLabel>Trial Offered</FormLabel></div>
+                  <div className="space-y-0.5"><FormLabel>Offers Trial</FormLabel></div>
                   <FormControl><Switch checked={field.value} onCheckedChange={field.onChange} /></FormControl>
                 </FormItem>
               )}
             />
-            <FormField control={form.control} name="blogPresence" render={({ field }) => (
+            <FormField control={form.control} name="hasBlog" render={({ field }) => (
                 <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
-                  <div className="space-y-0.5"><FormLabel>Blog Presence</FormLabel></div>
+                  <div className="space-y-0.5"><FormLabel>Has Blog</FormLabel></div>
                   <FormControl><Switch checked={field.value} onCheckedChange={field.onChange} /></FormControl>
                 </FormItem>
               )}
             />
-            <FormField control={form.control} name="resellPanelAvailable" render={({ field }) => (
+            <FormField control={form.control} name="hasResellPanel" render={({ field }) => (
                 <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
-                  <div className="space-y-0.5"><FormLabel>Resell Panel</FormLabel></div>
+                  <div className="space-y-0.5"><FormLabel>Has Resell Panel</FormLabel></div>
                   <FormControl><Switch checked={field.value} onCheckedChange={field.onChange} /></FormControl>
                 </FormItem>
               )}
@@ -240,8 +252,8 @@ export function BenchmarkForm({ benchmark }: BenchmarkFormProps) {
                 <FormItem><FormLabel>Start Timeline</FormLabel><FormControl><Input placeholder="e.g., Q2 2022" {...field} /></FormControl><FormMessage /></FormItem>
               )}
             />
-            <FormField control={form.control} name="prices" render={({ field }) => (
-                <FormItem><FormLabel>Prices</FormLabel><FormControl><Input placeholder="e.g., $10/mo" {...field} /></FormControl><FormMessage /></FormItem>
+            <FormField control={form.control} name="pricing" render={({ field }) => (
+                <FormItem><FormLabel>Pricing</FormLabel><FormControl><Input placeholder="e.g., $10/mo" {...field} /></FormControl><FormMessage /></FormItem>
               )}
             />
              <FormField control={form.control} name="connections" render={({ field }) => (
@@ -276,5 +288,3 @@ export function BenchmarkForm({ benchmark }: BenchmarkFormProps) {
     </Form>
   );
 }
-
-    

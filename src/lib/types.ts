@@ -4,15 +4,15 @@ export type Benchmark = {
   id: string;
   url: string;
   score: number;
-  organicSearchTraffic: number;
+  organicTraffic: number;
   countries: string[];
   startTimeline: string;
-  paymentMethods: string[];
-  paymentRedirectionUrl: string;
-  trialOffered: boolean;
-  blogPresence: boolean;
-  resellPanelAvailable: boolean;
-  prices: string;
+  paymentMethod: string;
+  paymentRedirect: string;
+  offerTrial: boolean;
+  hasBlog: boolean;
+  hasResellPanel: boolean;
+  pricing: string;
   connections: string;
   notes: string;
   tags: string[];
@@ -20,5 +20,3 @@ export type Benchmark = {
 };
 
 export type BenchmarkInput = Omit<Benchmark, "id" | "lastUpdated">;
-
-    
