@@ -1,4 +1,3 @@
-import type { Timestamp } from "firebase/firestore";
 
 export type Benchmark = {
   id: string;
@@ -16,7 +15,7 @@ export type Benchmark = {
   connections: string;
   notes: string;
   tags: string[];
-  lastUpdated: Timestamp;
+  lastUpdated: string; // Using ISO string for localStorage
 };
 
 export type BenchmarkInput = Omit<Benchmark, "id" | "lastUpdated">;

@@ -32,15 +32,12 @@ import {
   Trash2,
   XCircle,
 } from 'lucide-react';
-import Link from 'next/link';
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from './ui/dropdown-menu';
-import { deleteBenchmark } from '@/lib/actions';
-import { useToast } from '@/hooks/use-toast';
 import { Skeleton } from './ui/skeleton';
 import { format } from 'date-fns';
 
@@ -49,6 +46,13 @@ type SortProps = {
   sortBy: keyof Benchmark | null;
   sortDirection: 'asc' | 'desc';
 };
+
+type BenchmarkTableProps = {
+  benchmarks: Benchmark[];
+  loading: boolean;
+  onEdit: (benchmark: Benchmark) => void;
+  onDelete: (id: string) => void;
+} & SortProps;
 
 const SortableHeader = ({ children, field, ...sortProps }: { children: React.ReactNode, field: keyof Benchmark } & SortProps) => {
     const { sortBy, sortDirection, onSort } = sortProps;
@@ -63,25 +67,16 @@ const SortableHeader = ({ children, field, ...sortProps }: { children: React.Rea
     );
 }
 
-export function BenchmarkTable({ benchmarks, loading, ...sortProps }: { benchmarks: Benchmark[], loading: boolean } & SortProps) {
-  const { toast } = useToast();
-
-  const handleDelete = async (id: string, url: string) => {
+export function BenchmarkTable({ benchmarks, loading, onEdit, onDelete, ...sortProps }: BenchmarkTableProps) {
+  
+  const formatDate = (dateString: string | Date) => {
     try {
-      await deleteBenchmark(id);
-      toast({
-        title: 'Benchmark Deleted',
-        description: `Successfully deleted benchmark for ${url}.`,
-      });
-    } catch (error) {
-      toast({
-        variant: 'destructive',
-        title: 'Error Deleting Benchmark',
-        description:
-          error instanceof Error ? error.message : 'An unknown error occurred.',
-      });
+        const date = new Date(dateString);
+        return format(date, 'PP');
+    } catch {
+        return 'N/A';
     }
-  };
+  }
 
   return (
     <div className="rounded-lg border">
@@ -112,15 +107,15 @@ export function BenchmarkTable({ benchmarks, loading, ...sortProps }: { benchmar
                 <TableCell className="font-medium max-w-xs truncate">
                   <a href={b.url} target="_blank" rel="noopener noreferrer" className="hover:underline flex items-center gap-2">
                     <Globe className="h-4 w-4 text-muted-foreground" />
-                    {b.url}
+                    {b.url || 'No URL'}
                   </a>
                 </TableCell>
                 <TableCell>
                   <Badge variant={b.score > 7 ? 'default' : b.score > 4 ? 'secondary' : 'destructive'} className="text-base">
-                    {b.score}
+                    {b.score || 0}
                   </Badge>
                 </TableCell>
-                <TableCell>{b.organicTraffic}K</TableCell>
+                <TableCell>{b.organicTraffic || 0}K</TableCell>
                 <TableCell>
                   {b.offerTrial ? (
                     <CheckCircle className="h-5 w-5 text-green-500" />
@@ -133,7 +128,7 @@ export function BenchmarkTable({ benchmarks, loading, ...sortProps }: { benchmar
                         {b.tags?.map((tag) => <Badge key={tag} variant="outline">{tag}</Badge>)}
                     </div>
                 </TableCell>
-                <TableCell>{b.lastUpdated ? format(b.lastUpdated.toDate(), 'PP') : 'N/A'}</TableCell>
+                <TableCell>{formatDate(b.lastUpdated)}</TableCell>
                 <TableCell className="text-right">
                   <AlertDialog>
                     <DropdownMenu>
@@ -143,11 +138,9 @@ export function BenchmarkTable({ benchmarks, loading, ...sortProps }: { benchmar
                         </Button>
                       </DropdownMenuTrigger>
                       <DropdownMenuContent align="end">
-                        <DropdownMenuItem asChild>
-                          <Link href={`/benchmark/${b.id}`}>
-                            <Edit className="mr-2 h-4 w-4" />
-                            Edit
-                          </Link>
+                        <DropdownMenuItem onClick={() => onEdit(b)}>
+                          <Edit className="mr-2 h-4 w-4" />
+                          Edit
                         </DropdownMenuItem>
                         <AlertDialogTrigger asChild>
                           <DropdownMenuItem className="text-red-500 focus:text-red-500">
@@ -166,7 +159,7 @@ export function BenchmarkTable({ benchmarks, loading, ...sortProps }: { benchmar
                       </AlertDialogHeader>
                       <AlertDialogFooter>
                         <AlertDialogCancel>Cancel</AlertDialogCancel>
-                        <AlertDialogAction onClick={() => handleDelete(b.id, b.url)} className="bg-destructive hover:bg-destructive/90">
+                        <AlertDialogAction onClick={() => onDelete(b.id)} className="bg-destructive hover:bg-destructive/90">
                           Delete
                         </AlertDialogAction>
                       </AlertDialogFooter>

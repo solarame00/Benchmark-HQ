@@ -2,7 +2,6 @@ import { SidebarProvider, Sidebar, SidebarTrigger, SidebarHeader, SidebarContent
 import Link from 'next/link';
 import { BarChart3, GitCompare, Home, PlusSquare } from 'lucide-react';
 import { AppLogo } from '@/components/icons';
-import { MissingApiKeyAlert } from '@/components/missing-api-key-alert';
 
 export default function AppLayout({ children }: { children: React.ReactNode }) {
   return (
@@ -26,7 +25,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
                     </SidebarMenuItem>
                     <SidebarMenuItem>
                         <SidebarMenuButton asChild tooltip="Add New">
-                            <Link href="/add">
+                            <Link href="/?showForm=true">
                                 <PlusSquare />
                                 <span>Add New</span>
                             </Link>
@@ -56,7 +55,6 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
             <SidebarTrigger className="md:hidden"/>
           </header>
           <main className="flex flex-1 flex-col gap-4 p-4 sm:px-6 sm:py-0 md:gap-8">
-            <MissingApiKeyAlert />
             {children}
           </main>
         </SidebarInset>

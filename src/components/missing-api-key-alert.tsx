@@ -8,10 +8,9 @@ export function MissingApiKeyAlert() {
   const [isConfigMissing, setIsConfigMissing] = useState(false);
 
   useEffect(() => {
-    const apiKey = process.env.NEXT_PUBLIC_FIREBASE_API_KEY;
-    if (!apiKey) {
-      setIsConfigMissing(true);
-    }
+    // This component is no longer used for Firestore, but can be repurposed later.
+    // For now, we just ensure it doesn't render.
+    setIsConfigMissing(false);
   }, []);
 
   if (!isConfigMissing) {

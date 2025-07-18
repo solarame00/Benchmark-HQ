@@ -16,55 +16,50 @@ import {
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Switch } from '@/components/ui/switch';
-import { useToast } from '@/hooks/use-toast';
-import { addBenchmark, summarizeWebsite, updateBenchmark } from '@/lib/actions';
-import type { Benchmark } from '@/lib/types';
-import { useRouter } from 'next/navigation';
-import { Wand2, Loader2 } from 'lucide-react';
+import type { Benchmark, BenchmarkInput } from '@/lib/types';
+import { Loader2 } from 'lucide-react';
 import { useState } from 'react';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from './ui/card';
 
 const formSchema = z.object({
-  url: z.string().url({ message: 'Please enter a valid URL.' }),
-  score: z.coerce.number().min(0).max(10),
-  organicTraffic: z.coerce.number().min(0, { message: 'Traffic must be a positive number.' }),
-  countries: z.string().min(1, { message: 'Please enter at least one country.' }),
-  startTimeline: z.string(),
-  paymentMethod: z.string(),
-  paymentRedirect: z.string().url({ message: 'Please enter a valid URL.' }).optional().or(z.literal('')),
+  url: z.string().optional(),
+  score: z.coerce.number().optional(),
+  organicTraffic: z.coerce.number().optional(),
+  countries: z.string().optional(),
+  startTimeline: z.string().optional(),
+  paymentMethod: z.string().optional(),
+  paymentRedirect: z.string().optional(),
   offerTrial: z.boolean().default(false),
   hasBlog: z.boolean().default(false),
   hasResellPanel: z.boolean().default(false),
-  pricing: z.string(),
-  connections: z.string(),
+  pricing: z.string().optional(),
+  connections: z.string().optional(),
   notes: z.string().optional(),
   tags: z.string().optional(),
 });
 
 type BenchmarkFormProps = {
-  benchmark?: Benchmark;
+  benchmark?: Benchmark | null;
+  onSave: (data: BenchmarkInput, id?: string) => void;
+  onCancel: () => void;
 };
 
-export function BenchmarkForm({ benchmark }: BenchmarkFormProps) {
-  const router = useRouter();
-  const { toast } = useToast();
+export function BenchmarkForm({ benchmark, onSave, onCancel }: BenchmarkFormProps) {
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [isAiLoading, setIsAiLoading] = useState(false);
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: benchmark
       ? {
           ...benchmark,
-          score: benchmark.score || 0,
-          organicTraffic: benchmark.organicTraffic || 0,
+          score: benchmark.score || undefined,
+          organicTraffic: benchmark.organicTraffic || undefined,
           countries: benchmark.countries?.join('\n') || '',
           tags: benchmark.tags?.join(', ') || '',
         }
       : {
           url: '',
-          score: 5,
-          organicTraffic: 0,
+          score: undefined,
+          organicTraffic: undefined,
           countries: '',
           startTimeline: '',
           paymentMethod: '',
@@ -81,98 +76,46 @@ export function BenchmarkForm({ benchmark }: BenchmarkFormProps) {
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
     setIsSubmitting(true);
-    const toastId = toast({
-      title: 'Saving...',
-      description: 'Your benchmark is being saved.',
-    }).id;
+    
+    // Simulate async operation
+    await new Promise(resolve => setTimeout(resolve, 500));
 
-    try {
-      if (benchmark) {
-        await updateBenchmark(benchmark.id, values);
-        toast({ id: toastId, title: 'Success!', description: 'Benchmark updated successfully.' });
-        // No redirect on update, stay on the page
-      } else {
-        await addBenchmark(values);
-        toast({ id: toastId, title: 'Success!', description: 'Benchmark added successfully.' });
-        router.push('/');
-      }
-    } catch (error) {
-      toast({
-        id: toastId,
-        variant: 'destructive',
-        title: 'Error',
-        description: error instanceof Error ? error.message : 'An unknown error occurred.',
-      });
-    } finally {
-        setIsSubmitting(false);
-    }
-  }
-
-  async function handleAiAutofill() {
-    const url = form.getValues('url');
-    if (!url) {
-      form.setError('url', { type: 'manual', message: 'Please enter a URL to summarize.' });
-      return;
-    }
-    setIsAiLoading(true);
-    try {
-      const result = await summarizeWebsite({ url });
-      if (result) {
-        form.setValue('notes', result.summary, { shouldValidate: true });
-        form.setValue('paymentMethod', result.paymentMethods.join('\n'), { shouldValidate: true });
-        form.setValue('offerTrial', result.trialOffered, { shouldValidate: true });
-        form.setValue('hasBlog', result.blogPresence, { shouldValidate: true });
-        form.setValue('countries', result.countries.join('\n'), { shouldValidate: true });
-        if (result.organicSearchTraffic) form.setValue('organicTraffic', result.organicSearchTraffic, { shouldValidate: true });
-        if (result.resellPanelAvailable) form.setValue('hasResellPanel', result.resellPanelAvailable, { shouldValidate: true });
-        if (result.prices) form.setValue('pricing', result.prices, { shouldValidate: true });
-        if (result.connections) form.setValue('connections', result.connections, { shouldValidate: true });
-        toast({ title: 'AI Autofill Complete', description: 'The form has been pre-filled with AI-detected values.' });
-      }
-    } catch (error) {
-      toast({
-        variant: 'destructive',
-        title: 'AI Autofill Failed',
-        description: error instanceof Error ? error.message : 'Could not summarize the website.',
-      });
-    } finally {
-      setIsAiLoading(false);
-    }
+    const dataToSave: BenchmarkInput = {
+      ...values,
+      url: values.url || '',
+      score: values.score || 0,
+      organicTraffic: values.organicTraffic || 0,
+      countries: values.countries ? values.countries.split('\n').map(item => item.trim()).filter(Boolean) : [],
+      startTimeline: values.startTimeline || '',
+      paymentMethod: values.paymentMethod || '',
+      paymentRedirect: values.paymentRedirect || '',
+      pricing: values.pricing || '',
+      connections: values.connections || '',
+      notes: values.notes || '',
+      tags: values.tags ? values.tags.split(',').map(item => item.trim()).filter(Boolean) : [],
+    };
+    
+    onSave(dataToSave, benchmark?.id);
+    setIsSubmitting(false);
   }
 
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
         <div className="grid gap-6">
-          <Card>
-            <CardHeader>
-                <div className="flex justify-between items-start">
-                    <div>
-                        <CardTitle>AI Assistant</CardTitle>
-                        <CardDescription>Enter a URL and let AI pre-fill some fields for you.</CardDescription>
-                    </div>
-                    <Button type="button" onClick={handleAiAutofill} disabled={isAiLoading}>
-                        {isAiLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Wand2 className="mr-2 h-4 w-4" />}
-                        Auto-fill with AI
-                    </Button>
-                </div>
-            </CardHeader>
-            <CardContent>
-                <FormField
-                    control={form.control}
-                    name="url"
-                    render={({ field }) => (
-                        <FormItem>
-                        <FormLabel>Website URL</FormLabel>
-                        <FormControl>
-                            <Input placeholder="https://example.com" {...field} />
-                        </FormControl>
-                        <FormMessage />
-                        </FormItem>
-                    )}
-                />
-            </CardContent>
-          </Card>
+          <FormField
+            control={form.control}
+            name="url"
+            render={({ field }) => (
+                <FormItem>
+                <FormLabel>Website URL</FormLabel>
+                <FormControl>
+                    <Input placeholder="https://example.com" {...field} />
+                </FormControl>
+                <FormMessage />
+                </FormItem>
+            )}
+          />
 
           <div className="grid md:grid-cols-2 gap-6">
             <FormField control={form.control} name="score" render={({ field }) => (
@@ -213,6 +156,11 @@ export function BenchmarkForm({ benchmark }: BenchmarkFormProps) {
               )}
             />
           </div>
+          
+          <FormField control={form.control} name="pricing" render={({ field }) => (
+              <FormItem><FormLabel>Prices</FormLabel><FormControl><Textarea placeholder="1 Month: $10&#10;3 Months: $25" {...field} /></FormControl><FormMessage /></FormItem>
+            )}
+          />
 
           <FormField control={form.control} name="paymentRedirect" render={({ field }) => (
               <FormItem>
@@ -247,13 +195,9 @@ export function BenchmarkForm({ benchmark }: BenchmarkFormProps) {
             />
           </div>
 
-          <div className="grid md:grid-cols-3 gap-6">
+          <div className="grid md:grid-cols-2 gap-6">
             <FormField control={form.control} name="startTimeline" render={({ field }) => (
                 <FormItem><FormLabel>Start Timeline</FormLabel><FormControl><Input placeholder="e.g., Q2 2022" {...field} /></FormControl><FormMessage /></FormItem>
-              )}
-            />
-            <FormField control={form.control} name="pricing" render={({ field }) => (
-                <FormItem><FormLabel>Pricing</FormLabel><FormControl><Input placeholder="e.g., $10/mo" {...field} /></FormControl><FormMessage /></FormItem>
               )}
             />
              <FormField control={form.control} name="connections" render={({ field }) => (
@@ -280,10 +224,15 @@ export function BenchmarkForm({ benchmark }: BenchmarkFormProps) {
             )}
           />
         </div>
-        <Button type="submit" disabled={isSubmitting || isAiLoading}>
-          {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-          {benchmark ? 'Update Benchmark' : 'Save Benchmark'}
-        </Button>
+        <div className="flex gap-2">
+            <Button type="submit" disabled={isSubmitting}>
+            {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+            {benchmark ? 'Update Benchmark' : 'Save Benchmark'}
+            </Button>
+            <Button type="button" variant="outline" onClick={onCancel} disabled={isSubmitting}>
+                Cancel
+            </Button>
+        </div>
       </form>
     </Form>
   );

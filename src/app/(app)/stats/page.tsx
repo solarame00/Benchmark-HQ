@@ -1,8 +1,6 @@
 'use client';
 
 import { useState, useEffect, useMemo } from 'react';
-import { collection, onSnapshot, query, orderBy } from 'firebase/firestore';
-import { db } from '@/lib/firebase';
 import type { Benchmark } from '@/lib/types';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Bar, BarChart, CartesianGrid, XAxis, YAxis, Tooltip, Legend, ResponsiveContainer } from 'recharts';
@@ -13,25 +11,22 @@ export default function StatsPage() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const q = query(collection(db, 'benchmarks'), orderBy('score', 'desc'));
-    const unsubscribe = onSnapshot(q, (querySnapshot) => {
-      const benchmarksData = querySnapshot.docs.map((doc) => ({
-        id: doc.id,
-        ...doc.data(),
-      } as Benchmark));
-      setBenchmarks(benchmarksData);
-      setLoading(false);
-    }, (error) => {
-        console.error("Error fetching benchmarks for stats: ", error);
-        setLoading(false);
-    });
-
-    return () => unsubscribe();
+     try {
+      const storedBenchmarks = localStorage.getItem('benchmarks');
+      if (storedBenchmarks) {
+        const parsedBenchmarks: Benchmark[] = JSON.parse(storedBenchmarks);
+        parsedBenchmarks.sort((a, b) => (b.score || 0) - (a.score || 0));
+        setBenchmarks(parsedBenchmarks);
+      }
+    } catch (error) {
+      console.error("Failed to load benchmarks from local storage", error);
+    }
+    setLoading(false);
   }, []);
 
   const chartData = useMemo(() => {
     return benchmarks.map(b => ({
-      name: (new URL(b.url)).hostname.replace('www.', ''),
+      name: b.url ? (new URL(b.url)).hostname.replace('www.', '') : 'N/A',
       Score: b.score,
       Traffic: b.organicTraffic
     }));
