@@ -65,7 +65,7 @@ function DashboardContent() {
       setEditingBenchmark(null);
       setActiveBenchmark(null);
     } else if (!shouldShowForm && showForm) {
-      // This case can be triggered by the Cancel button in the form
+      // This can be triggered by the Cancel button in the form
       // No need to reset editingBenchmark here as it's handled by onCancel
     }
   }, [searchParams, showForm]);

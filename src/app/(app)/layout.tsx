@@ -25,7 +25,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
                     </SidebarMenuItem>
                     <SidebarMenuItem>
                         <SidebarMenuButton asChild tooltip="Add New">
-                            <Link href="/?showForm=true">
+                            <Link href="/?showForm=true" scroll={false}>
                                 <PlusSquare />
                                 <span>Add New</span>
                             </Link>
