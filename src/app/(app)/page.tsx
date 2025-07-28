@@ -232,7 +232,7 @@ function DashboardContent() {
                         <SelectTrigger className="w-full">
                             <SelectValue placeholder="Filter by primary market" />
                         </SelectTrigger>
-                        <SelectContent>
+                        <SelectContent position="item-aligned">
                             <SelectItem value="all">All Primary Markets</SelectItem>
                             {COUNTRIES.map(country => (
                               <SelectItem key={country} value={country}>{country}</SelectItem>

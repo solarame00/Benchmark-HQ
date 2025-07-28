@@ -169,7 +169,7 @@ export function BenchmarkForm({ benchmark, onSave, onCancel }: BenchmarkFormProp
                   <FormControl>
                     <SelectTrigger><SelectValue placeholder="Select a country" /></SelectTrigger>
                   </FormControl>
-                  <SelectContent>
+                  <SelectContent position="item-aligned">
                     {COUNTRIES.map(c => <SelectItem key={c} value={c}>{c}</SelectItem>)}
                   </SelectContent>
                 </Select>
@@ -183,7 +183,7 @@ export function BenchmarkForm({ benchmark, onSave, onCancel }: BenchmarkFormProp
                   <FormControl>
                     <SelectTrigger><SelectValue placeholder="Optional" /></SelectTrigger>
                   </FormControl>
-                  <SelectContent>
+                  <SelectContent position="item-aligned">
                     {COUNTRIES.map(c => <SelectItem key={c} value={c}>{c}</SelectItem>)}
                   </SelectContent>
                 </Select>
@@ -197,7 +197,7 @@ export function BenchmarkForm({ benchmark, onSave, onCancel }: BenchmarkFormProp
                   <FormControl>
                     <SelectTrigger><SelectValue placeholder="Optional" /></SelectTrigger>
                   </FormControl>
-                  <SelectContent>
+                  <SelectContent position="item-aligned">
                     {COUNTRIES.map(c => <SelectItem key={c} value={c}>{c}</SelectItem>)}
                   </SelectContent>
                 </Select>
@@ -288,7 +288,7 @@ export function BenchmarkForm({ benchmark, onSave, onCancel }: BenchmarkFormProp
           </div>
           
           <FormField control={form.control} name="pricing" render={({ field }) => (
-              <FormItem><FormLabel>Prices</FormLabel><FormControl><Textarea placeholder="1 Month: $10&#10;3 Months: $25" {...field} /></FormControl><FormMessage /></FormItem>
+              <FormItem><FormLabel>Prices</FormLabel><FormControl><Textarea placeholder="1 Month: $10\n3 Months: $25" {...field} /></FormControl><FormMessage /></FormItem>
             )}
           />
 
