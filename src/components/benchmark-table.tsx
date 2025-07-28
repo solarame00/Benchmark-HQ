@@ -48,6 +48,15 @@ type BenchmarkTableProps = {
   isDetailsView?: boolean;
 };
 
+const pricingLabels: Record<keyof Omit<Pricing, 'currency'>, string> = {
+    oneMonth: '1 Month',
+    threeMonths: '3 Months',
+    sixMonths: '6 Months',
+    twelveMonths: '12 Months',
+    twoYear: '2 Year',
+    lifetime: 'Lifetime',
+};
+
 export function BenchmarkTable({ benchmarks, loading, onEdit, onDelete, isDetailsView = false }: BenchmarkTableProps) {
   
   const formatDate = (dateString: string | Date) => {
@@ -80,7 +89,7 @@ export function BenchmarkTable({ benchmarks, loading, onEdit, onDelete, isDetail
      if (key === 'pricing' && typeof value === 'object' && value !== null) {
         const pricing = value as Pricing;
         const currency = pricing.currency || '';
-        const pricingEntries = Object.entries(pricing).filter(([period, price]) => price && period !== 'currency');
+        const pricingEntries = Object.entries(pricing).filter(([period, price]) => price && period !== 'currency') as [keyof Omit<Pricing, 'currency'>, string][];
         
         if (pricingEntries.length === 0) return 'N/A';
         
@@ -88,8 +97,8 @@ export function BenchmarkTable({ benchmarks, loading, onEdit, onDelete, isDetail
              <div className="flex flex-col gap-1">
                 {pricingEntries.map(([period, price]) => (
                     <div key={period}>
-                        <span className="font-semibold capitalize">{period.replace(/([A-Z])/g, ' $1').trim()}: </span>
-                        <span>{currency}{price as string}</span>
+                        <span className="font-semibold capitalize">{pricingLabels[period]}: </span>
+                        <span>{currency}{price}</span>
                     </div>
                 ))}
             </div>
