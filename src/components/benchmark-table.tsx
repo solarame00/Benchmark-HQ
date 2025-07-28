@@ -1,7 +1,7 @@
 
 'use client';
 
-import type { Benchmark } from '@/lib/types';
+import type { Benchmark, Pricing } from '@/lib/types';
 import {
   Table,
   TableBody,
@@ -77,12 +77,26 @@ export function BenchmarkTable({ benchmarks, loading, onEdit, onDelete, isDetail
     if (key === 'organicTraffic' && typeof value === 'number') {
         return `${value}K`;
     }
+    if (key === 'pricing' && typeof value === 'object' && value !== null) {
+        const pricingEntries = Object.entries(value).filter(([, price]) => price);
+        if (pricingEntries.length === 0) return 'N/A';
+        return (
+             <div className="flex flex-col gap-1">
+                {pricingEntries.map(([period, price]) => (
+                    <div key={period}>
+                        <span className="font-semibold capitalize">{period.replace(/([A-Z])/g, ' $1').trim()}: </span>
+                        <span>{price as string}</span>
+                    </div>
+                ))}
+            </div>
+        )
+    }
     return value || 'N/A';
   };
   
   const fieldLabels: Record<keyof Omit<Benchmark, 'id'>, string> = {
     url: 'URL',
-    score: 'Score',
+    score: 'Score Authority',
     organicTraffic: 'Organic Traffic',
     primaryMarket: 'Primary Market',
     secondaryMarket: 'Secondary Market',
@@ -98,7 +112,7 @@ export function BenchmarkTable({ benchmarks, loading, onEdit, onDelete, isDetail
     pricing: 'Pricing',
     connections: 'Connections',
     notes: 'Notes',
-    tags: 'Tags',
+    tags: 'Keywords',
     lastUpdated: 'Last Updated',
   };
 
@@ -163,7 +177,7 @@ export function BenchmarkTable({ benchmarks, loading, onEdit, onDelete, isDetail
             <TableHead>Score</TableHead>
             <TableHead>Primary Market</TableHead>
             <TableHead>Trial</TableHead>
-            <TableHead>Tags</TableHead>
+            <TableHead>Keywords</TableHead>
             <TableHead>Last Updated</TableHead>
             <TableHead className="text-right">Actions</TableHead>
           </TableRow>

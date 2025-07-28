@@ -1,4 +1,14 @@
 
+
+export type Pricing = {
+  oneMonth?: string;
+  threeMonths?: string;
+  sixMonths?: string;
+  twelveMonths?: string;
+  twoYear?: string;
+  lifetime?: string;
+};
+
 export type Benchmark = {
   id: string;
   url: string;
@@ -15,11 +25,11 @@ export type Benchmark = {
   hasBlog: boolean;
   hasResellPanel: boolean;
   requiresAccount: boolean;
-  pricing: string;
+  pricing: Pricing;
   connections: string;
   notes: string;
   tags: string[];
   lastUpdated: string; // Using ISO string for localStorage
 };
 
-export type BenchmarkInput = Omit<Benchmark, "id" | "lastUpdated" | "paymentMethod"> & { paymentMethod?: string };
+export type BenchmarkInput = Omit<Benchmark, "id" | "lastUpdated">;

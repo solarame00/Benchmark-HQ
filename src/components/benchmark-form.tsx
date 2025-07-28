@@ -41,7 +41,14 @@ const formSchema = z.object({
   hasBlog: z.boolean().default(false),
   hasResellPanel: z.boolean().default(false),
   requiresAccount: z.boolean().default(false),
-  pricing: z.string().optional(),
+  pricing: z.object({
+    oneMonth: z.string().optional(),
+    threeMonths: z.string().optional(),
+    sixMonths: z.string().optional(),
+    twelveMonths: z.string().optional(),
+    twoYear: z.string().optional(),
+    lifetime: z.string().optional(),
+  }).optional(),
   connections: z.string().optional(),
   notes: z.string().optional(),
   tags: z.string().optional(),
@@ -70,7 +77,7 @@ export function BenchmarkForm({ benchmark, onSave, onCancel }: BenchmarkFormProp
           paymentStrategy: benchmark.paymentStrategy || '',
           paymentMethods: benchmark.paymentMethods || [],
           paymentRedirect: benchmark.paymentRedirect || '',
-          pricing: benchmark.pricing || '',
+          pricing: benchmark.pricing || {},
           connections: benchmark.connections || '',
           notes: benchmark.notes || '',
         }
@@ -89,7 +96,14 @@ export function BenchmarkForm({ benchmark, onSave, onCancel }: BenchmarkFormProp
           hasBlog: false,
           hasResellPanel: false,
           requiresAccount: false,
-          pricing: '',
+          pricing: {
+            oneMonth: '',
+            threeMonths: '',
+            sixMonths: '',
+            twelveMonths: '',
+            twoYear: '',
+            lifetime: '',
+          },
           connections: '',
           notes: '',
           tags: '',
@@ -114,7 +128,7 @@ export function BenchmarkForm({ benchmark, onSave, onCancel }: BenchmarkFormProp
       paymentStrategy: values.paymentStrategy || '',
       paymentMethods: values.paymentMethods || [],
       paymentRedirect: values.paymentRedirect || '',
-      pricing: values.pricing || '',
+      pricing: values.pricing || {},
       connections: values.connections || '',
       notes: values.notes || '',
       tags: values.tags ? values.tags.split(',').map(item => item.trim()).filter(Boolean) : [],
@@ -145,7 +159,7 @@ export function BenchmarkForm({ benchmark, onSave, onCancel }: BenchmarkFormProp
           <div className="grid md:grid-cols-2 gap-6">
             <FormField control={form.control} name="score" render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Score (0-10)</FormLabel>
+                  <FormLabel>Score Authority</FormLabel>
                   <FormControl><Input type="number" {...field} /></FormControl>
                   <FormMessage />
                 </FormItem>
@@ -184,6 +198,7 @@ export function BenchmarkForm({ benchmark, onSave, onCancel }: BenchmarkFormProp
                     <SelectTrigger><SelectValue placeholder="Optional" /></SelectTrigger>
                   </FormControl>
                   <SelectContent position="item-aligned">
+                    <SelectItem value="">None</SelectItem>
                     {COUNTRIES.map(c => <SelectItem key={c} value={c}>{c}</SelectItem>)}
                   </SelectContent>
                 </Select>
@@ -198,12 +213,37 @@ export function BenchmarkForm({ benchmark, onSave, onCancel }: BenchmarkFormProp
                     <SelectTrigger><SelectValue placeholder="Optional" /></SelectTrigger>
                   </FormControl>
                   <SelectContent position="item-aligned">
+                    <SelectItem value="">None</SelectItem>
                     {COUNTRIES.map(c => <SelectItem key={c} value={c}>{c}</SelectItem>)}
                   </SelectContent>
                 </Select>
                 <FormMessage />
               </FormItem>
             )} />
+          </div>
+          
+           <div className="grid gap-4 rounded-lg border p-4">
+            <h3 className="font-semibold">Pricing Details</h3>
+             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <FormField control={form.control} name="pricing.oneMonth" render={({ field }) => (
+                  <FormItem><FormLabel>1 Month Price</FormLabel><FormControl><Input placeholder="e.g. $19" {...field} /></FormControl><FormMessage /></FormItem>
+                )} />
+                <FormField control={form.control} name="pricing.threeMonths" render={({ field }) => (
+                  <FormItem><FormLabel>3 Months Price</FormLabel><FormControl><Input placeholder="e.g. $49" {...field} /></FormControl><FormMessage /></FormItem>
+                )} />
+                <FormField control={form.control} name="pricing.sixMonths" render={({ field }) => (
+                  <FormItem><FormLabel>6 Months Price</FormLabel><FormControl><Input placeholder="e.g. $89" {...field} /></FormControl><FormMessage /></FormItem>
+                )} />
+                <FormField control={form.control} name="pricing.twelveMonths" render={({ field }) => (
+                  <FormItem><FormLabel>12 Months Price</FormLabel><FormControl><Input placeholder="e.g. $159" {...field} /></FormControl><FormMessage /></FormItem>
+                )} />
+                <FormField control={form.control} name="pricing.twoYear" render={({ field }) => (
+                  <FormItem><FormLabel>2 Year Price</FormLabel><FormControl><Input placeholder="e.g. $299" {...field} /></FormControl><FormMessage /></FormItem>
+                )} />
+                <FormField control={form.control} name="pricing.lifetime" render={({ field }) => (
+                  <FormItem><FormLabel>Lifetime Price</FormLabel><FormControl><Input placeholder="e.g. $499" {...field} /></FormControl><FormMessage /></FormItem>
+                )} />
+             </div>
           </div>
 
           <div className="grid gap-4 rounded-lg border p-4">
@@ -286,11 +326,6 @@ export function BenchmarkForm({ benchmark, onSave, onCancel }: BenchmarkFormProp
             )}
           />
           </div>
-          
-          <FormField control={form.control} name="pricing" render={({ field }) => (
-              <FormItem><FormLabel>Prices</FormLabel><FormControl><Textarea placeholder="1 Month: $10\n3 Months: $25" {...field} /></FormControl><FormMessage /></FormItem>
-            )}
-          />
 
           <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-4">
             <FormField control={form.control} name="offerTrial" render={({ field }) => (
@@ -355,9 +390,9 @@ export function BenchmarkForm({ benchmark, onSave, onCancel }: BenchmarkFormProp
           />
           <FormField control={form.control} name="tags" render={({ field }) => (
               <FormItem>
-                <FormLabel>Tags</FormLabel>
-                <FormControl><Input placeholder="French Market, US-based, High-Traffic" {...field} /></FormControl>
-                <FormDescription>Comma-separated list of tags.</FormDescription>
+                <FormLabel>Keywords</FormLabel>
+                <FormControl><Input placeholder="IPTV, Sports, VOD" {...field} /></FormControl>
+                <FormDescription>Comma-separated keywords (e.g., IPTV, Sports, VOD).</FormDescription>
                 <FormMessage />
               </FormItem>
             )}
