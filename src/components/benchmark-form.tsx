@@ -21,7 +21,9 @@ import type { Benchmark, BenchmarkInput } from '@/lib/types';
 import { Loader2 } from 'lucide-react';
 import { useState } from 'react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { COUNTRIES } from '@/lib/constants';
+import { COUNTRIES, CONNECTION_OPTIONS, PAYMENT_STRATEGIES, PAYMENT_METHODS } from '@/lib/constants';
+import { RadioGroup, RadioGroupItem } from './ui/radio-group';
+import { Checkbox } from './ui/checkbox';
 
 
 const formSchema = z.object({
@@ -32,7 +34,8 @@ const formSchema = z.object({
   secondaryMarket: z.string().optional(),
   tertiaryMarket: z.string().optional(),
   startTimeline: z.string().optional(),
-  paymentMethod: z.string().optional(),
+  paymentStrategy: z.string().optional(),
+  paymentMethods: z.array(z.string()).optional(),
   paymentRedirect: z.string().optional(),
   offerTrial: z.boolean().default(false),
   hasBlog: z.boolean().default(false),
@@ -70,7 +73,8 @@ export function BenchmarkForm({ benchmark, onSave, onCancel }: BenchmarkFormProp
           secondaryMarket: '',
           tertiaryMarket: '',
           startTimeline: '',
-          paymentMethod: '',
+          paymentStrategy: '',
+          paymentMethods: [],
           paymentRedirect: '',
           offerTrial: false,
           hasBlog: false,
@@ -98,7 +102,8 @@ export function BenchmarkForm({ benchmark, onSave, onCancel }: BenchmarkFormProp
       secondaryMarket: values.secondaryMarket || '',
       tertiaryMarket: values.tertiaryMarket || '',
       startTimeline: values.startTimeline || '',
-      paymentMethod: values.paymentMethod || '',
+      paymentStrategy: values.paymentStrategy || '',
+      paymentMethods: values.paymentMethods || [],
       paymentRedirect: values.paymentRedirect || '',
       pricing: values.pricing || '',
       connections: values.connections || '',
@@ -147,7 +152,7 @@ export function BenchmarkForm({ benchmark, onSave, onCancel }: BenchmarkFormProp
             />
           </div>
 
-          <div className="grid md:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             <FormField control={form.control} name="primaryMarket" render={({ field }) => (
               <FormItem>
                 <FormLabel>Primary Market</FormLabel>
@@ -192,27 +197,89 @@ export function BenchmarkForm({ benchmark, onSave, onCancel }: BenchmarkFormProp
             )} />
           </div>
 
-          <FormField control={form.control} name="paymentMethod" render={({ field }) => (
-              <FormItem>
-                <FormLabel>Payment Method(s)</FormLabel>
-                <FormControl><Textarea placeholder="Stripe&#10;PayPal&#10;Crypto" {...field} /></FormControl>
-                  <FormDescription>Enter one payment method per line.</FormDescription>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-          
-          <FormField control={form.control} name="pricing" render={({ field }) => (
-              <FormItem><FormLabel>Prices</FormLabel><FormControl><Textarea placeholder="1 Month: $10&#10;3 Months: $25" {...field} /></FormControl><FormMessage /></FormItem>
-            )}
-          />
-
-          <FormField control={form.control} name="paymentRedirect" render={({ field }) => (
+          <div className="grid gap-4 rounded-lg border p-4">
+            <h3 className="font-semibold">Payment Details</h3>
+            <FormField
+              control={form.control}
+              name="paymentStrategy"
+              render={({ field }) => (
+                <FormItem className="space-y-3">
+                  <FormLabel>Payment Strategy</FormLabel>
+                  <FormControl>
+                    <RadioGroup
+                      onValueChange={field.onChange}
+                      defaultValue={field.value}
+                      className="flex flex-col space-y-1"
+                    >
+                      {PAYMENT_STRATEGIES.map((strategy) => (
+                         <FormItem key={strategy} className="flex items-center space-x-3 space-y-0">
+                          <FormControl>
+                            <RadioGroupItem value={strategy} />
+                          </FormControl>
+                          <FormLabel className="font-normal">{strategy}</FormLabel>
+                        </FormItem>
+                      ))}
+                    </RadioGroup>
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
+              name="paymentMethods"
+              render={() => (
+                <FormItem>
+                  <div className="mb-4">
+                    <FormLabel>Payment Methods Offered</FormLabel>
+                  </div>
+                  <div className="grid md:grid-cols-2 gap-4">
+                    {PAYMENT_METHODS.map((item) => (
+                      <FormField
+                        key={item}
+                        control={form.control}
+                        name="paymentMethods"
+                        render={({ field }) => {
+                          return (
+                            <FormItem key={item} className="flex flex-row items-start space-x-3 space-y-0">
+                              <FormControl>
+                                <Checkbox
+                                  checked={field.value?.includes(item)}
+                                  onCheckedChange={(checked) => {
+                                    return checked
+                                      ? field.onChange([...(field.value || []), item])
+                                      : field.onChange(
+                                          field.value?.filter(
+                                            (value) => value !== item
+                                          )
+                                        )
+                                  }}
+                                />
+                              </FormControl>
+                              <FormLabel className="font-normal">{item}</FormLabel>
+                            </FormItem>
+                          )
+                        }}
+                      />
+                    ))}
+                  </div>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+             <FormField control={form.control} name="paymentRedirect" render={({ field }) => (
               <FormItem>
                 <FormLabel>Payment Redirect URL</FormLabel>
                 <FormControl><Input placeholder="https://checkout.example.com" {...field} /></FormControl>
+                <FormDescription>Required if strategy is 'Redirect Payment'.</FormDescription>
                 <FormMessage />
               </FormItem>
+            )}
+          />
+          </div>
+          
+          <FormField control={form.control} name="pricing" render={({ field }) => (
+              <FormItem><FormLabel>Prices</FormLabel><FormControl><Textarea placeholder="1 Month: $10&#10;3 Months: $25" {...field} /></FormControl><FormMessage /></FormItem>
             )}
           />
 
@@ -253,7 +320,18 @@ export function BenchmarkForm({ benchmark, onSave, onCancel }: BenchmarkFormProp
               )}
             />
              <FormField control={form.control} name="connections" render={({ field }) => (
-                <FormItem><FormLabel>Connections</FormLabel><FormControl><Input placeholder="e.g., Up to 4" {...field} /></FormControl><FormMessage /></FormItem>
+                <FormItem>
+                  <FormLabel>Connections</FormLabel>
+                  <Select onValueChange={field.onChange} defaultValue={field.value}>
+                    <FormControl>
+                      <SelectTrigger><SelectValue placeholder="Select number of connections" /></SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      {CONNECTION_OPTIONS.map(c => <SelectItem key={c} value={c}>{c}</SelectItem>)}
+                    </SelectContent>
+                  </Select>
+                  <FormMessage />
+                </FormItem>
               )}
             />
           </div>

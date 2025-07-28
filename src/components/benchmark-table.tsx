@@ -59,11 +59,12 @@ export function BenchmarkTable({ benchmarks, loading, onEdit, onDelete, isDetail
     }
   }
 
-  const renderValue = (value: any) => {
+  const renderValue = (value: any, key: string) => {
     if (typeof value === 'boolean') {
       return value ? <CheckCircle className="h-5 w-5 text-green-500" /> : <XCircle className="h-5 w-5 text-red-500" />;
     }
     if (Array.isArray(value)) {
+      if (value.length === 0) return 'N/A';
       return (
         <div className="flex flex-wrap gap-1">
           {value.map((item, index) => <Badge key={index} variant="outline">{item}</Badge>)}
@@ -73,18 +74,22 @@ export function BenchmarkTable({ benchmarks, loading, onEdit, onDelete, isDetail
     if (typeof value === 'string' && value.startsWith('http')) {
         return <a href={value} target="_blank" rel="noopener noreferrer" className="hover:underline text-primary">{value}</a>
     }
+    if (key === 'organicTraffic' && typeof value === 'number') {
+        return `${value}K`;
+    }
     return value || 'N/A';
   };
   
   const fieldLabels: Record<keyof Omit<Benchmark, 'id'>, string> = {
     url: 'URL',
     score: 'Score',
-    organicTraffic: 'Organic Traffic (K)',
+    organicTraffic: 'Organic Traffic',
     primaryMarket: 'Primary Market',
     secondaryMarket: 'Secondary Market',
     tertiaryMarket: 'Tertiary Market',
     startTimeline: 'Start Timeline',
-    paymentMethod: 'Payment Methods',
+    paymentStrategy: 'Payment Strategy',
+    paymentMethods: 'Payment Methods',
     paymentRedirect: 'Payment Redirect',
     offerTrial: 'Offers Trial?',
     hasBlog: 'Has Blog?',
@@ -109,7 +114,7 @@ export function BenchmarkTable({ benchmarks, loading, onEdit, onDelete, isDetail
             {entries.map(([key, value]) => (
               <TableRow key={key}>
                 <TableCell className="font-semibold w-1/4">{fieldLabels[key]}</TableCell>
-                <TableCell className="whitespace-pre-wrap">{key === 'lastUpdated' ? formatDate(value) : renderValue(value)}</TableCell>
+                <TableCell className="whitespace-pre-wrap">{key === 'lastUpdated' ? formatDate(value) : renderValue(value, key)}</TableCell>
               </TableRow>
             ))}
              <TableRow>

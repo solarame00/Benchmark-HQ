@@ -8,7 +8,8 @@ export type Benchmark = {
   secondaryMarket?: string;
   tertiaryMarket?: string;
   startTimeline: string;
-  paymentMethod: string;
+  paymentStrategy: string;
+  paymentMethods: string[];
   paymentRedirect: string;
   offerTrial: boolean;
   hasBlog: boolean;
@@ -21,4 +22,4 @@ export type Benchmark = {
   lastUpdated: string; // Using ISO string for localStorage
 };
 
-export type BenchmarkInput = Omit<Benchmark, "id" | "lastUpdated">;
+export type BenchmarkInput = Omit<Benchmark, "id" | "lastUpdated" | "paymentMethod"> & { paymentMethod?: string };
