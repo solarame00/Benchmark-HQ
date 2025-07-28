@@ -78,7 +78,15 @@ export function BenchmarkForm({ benchmark, onSave, onCancel }: BenchmarkFormProp
           paymentStrategy: benchmark.paymentStrategy || '',
           paymentMethods: benchmark.paymentMethods || [],
           paymentRedirect: benchmark.paymentRedirect || '',
-          pricing: benchmark.pricing || {},
+          pricing: {
+            currency: benchmark.pricing?.currency || '',
+            oneMonth: benchmark.pricing?.oneMonth || '',
+            threeMonths: benchmark.pricing?.threeMonths || '',
+            sixMonths: benchmark.pricing?.sixMonths || '',
+            twelveMonths: benchmark.pricing?.twelveMonths || '',
+            twoYear: benchmark.pricing?.twoYear || '',
+            lifetime: benchmark.pricing?.lifetime || '',
+          },
           connections: benchmark.connections || '',
           notes: benchmark.notes || '',
         }
@@ -424,3 +432,5 @@ export function BenchmarkForm({ benchmark, onSave, onCancel }: BenchmarkFormProp
     </Form>
   );
 }
+
+    
