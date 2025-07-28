@@ -1,9 +1,29 @@
+
+'use client';
+
 import { SidebarProvider, Sidebar, SidebarTrigger, SidebarHeader, SidebarContent, SidebarMenu, SidebarMenuItem, SidebarMenuButton, SidebarInset } from '@/components/ui/sidebar';
 import Link from 'next/link';
 import { Home, PlusSquare } from 'lucide-react';
 import { AppLogo } from '@/components/icons';
+import { usePathname, useRouter, useSearchParams } from 'next/navigation';
+
 
 export default function AppLayout({ children }: { children: React.ReactNode }) {
+  const router = useRouter();
+
+  const handleAllBenchmarksClick = (e: React.MouseEvent<HTMLAnchorElement>) => {
+    e.preventDefault();
+    const current = new URL(window.location.href);
+    current.searchParams.delete('showForm');
+    router.push(current.pathname, { scroll: false });
+    // We also need to force a re-render or state update on the page
+    // The most reliable way is to ensure the page component's useEffect logic handles this.
+    // The change in URL should be sufficient, but we make it explicit here.
+    window.dispatchEvent(new PopStateEvent('popstate'));
+    router.push('/');
+  };
+
+
   return (
     <SidebarProvider>
         <Sidebar>
@@ -17,7 +37,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
                 <SidebarMenu>
                     <SidebarMenuItem>
                         <SidebarMenuButton asChild tooltip="All Benchmarks">
-                            <Link href="/">
+                             <Link href="/" onClick={handleAllBenchmarksClick}>
                                 <Home />
                                 <span>All Benchmarks</span>
                             </Link>

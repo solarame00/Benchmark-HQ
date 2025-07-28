@@ -60,15 +60,15 @@ function DashboardContent() {
   
   useEffect(() => {
     const shouldShowForm = searchParams.get('showForm') === 'true';
-    if (shouldShowForm && !showForm) {
-      setShowForm(true);
-      setEditingBenchmark(null);
-      setActiveBenchmark(null);
-    } else if (!shouldShowForm && showForm) {
-      // This can be triggered by the Cancel button in the form
-      // No need to reset editingBenchmark here as it's handled by onCancel
-    }
-  }, [searchParams, showForm]);
+      if (shouldShowForm) {
+        setShowForm(true);
+        setEditingBenchmark(null);
+        setActiveBenchmark(null);
+      } else {
+        setShowForm(false);
+        setEditingBenchmark(null);
+      }
+  }, [searchParams]);
 
   useEffect(() => {
     if(!loading) {
@@ -102,8 +102,6 @@ function DashboardContent() {
     const current = new URL(window.location.href);
     current.searchParams.delete('showForm');
     router.push(current.toString(), { scroll: false });
-    setShowForm(false);
-    setEditingBenchmark(null);
   }
 
 
@@ -351,3 +349,4 @@ export default function DashboardPage() {
         </Suspense>
     )
 }
+
