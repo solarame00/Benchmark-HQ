@@ -59,17 +59,16 @@ function DashboardContent() {
   }, []);
   
   useEffect(() => {
-    if (searchParams.get('showForm') === 'true') {
-        handleAddNew();
-    } else if (showForm) {
-        // If showForm is true but the URL param is gone, close the form.
-        const current = new URL(window.location.href);
-        current.searchParams.delete('showForm');
-        router.replace(current.pathname + current.search);
-        setShowForm(false);
-        setEditingBenchmark(null);
+    const shouldShowForm = searchParams.get('showForm') === 'true';
+    if (shouldShowForm && !showForm) {
+      setShowForm(true);
+      setEditingBenchmark(null);
+      setActiveBenchmark(null);
+    } else if (!shouldShowForm && showForm) {
+      setShowForm(false);
+      setEditingBenchmark(null);
     }
-  }, [searchParams, showForm, router]);
+  }, [searchParams, showForm]);
 
   useEffect(() => {
     if(!loading) {
@@ -78,15 +77,18 @@ function DashboardContent() {
   }, [benchmarks, loading]);
 
   const handleAddNew = () => {
-    setEditingBenchmark(null);
-    setShowForm(true);
-    setActiveBenchmark(null);
+    const current = new URL(window.location.href);
+    current.searchParams.set('showForm', 'true');
+    router.push(current.toString());
   }
 
   const handleEdit = (benchmark: Benchmark) => {
     setEditingBenchmark(benchmark);
     setShowForm(true);
     setActiveBenchmark(null);
+    const current = new URL(window.location.href);
+    current.searchParams.set('showForm', 'true');
+    router.push(current.toString());
   }
 
   const handleDelete = (id: string) => {
@@ -100,7 +102,7 @@ function DashboardContent() {
   const handleCancelForm = () => {
     const current = new URL(window.location.href);
     current.searchParams.delete('showForm');
-    router.replace(current.pathname + current.search);
+    router.push(current.toString());
     setShowForm(false);
     setEditingBenchmark(null);
   }
