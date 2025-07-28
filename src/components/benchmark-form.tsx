@@ -64,6 +64,15 @@ export function BenchmarkForm({ benchmark, onSave, onCancel }: BenchmarkFormProp
           score: benchmark.score || undefined,
           organicTraffic: benchmark.organicTraffic || undefined,
           tags: benchmark.tags?.join(', ') || '',
+          secondaryMarket: benchmark.secondaryMarket || '',
+          tertiaryMarket: benchmark.tertiaryMarket || '',
+          startTimeline: benchmark.startTimeline || '',
+          paymentStrategy: benchmark.paymentStrategy || '',
+          paymentMethods: benchmark.paymentMethods || [],
+          paymentRedirect: benchmark.paymentRedirect || '',
+          pricing: benchmark.pricing || '',
+          connections: benchmark.connections || '',
+          notes: benchmark.notes || '',
         }
       : {
           url: '',
