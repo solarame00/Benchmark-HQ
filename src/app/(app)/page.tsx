@@ -8,11 +8,15 @@ import { BenchmarkForm } from '@/components/benchmark-form';
 import { BenchmarkCard } from '@/components/benchmark-card';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
-import { PlusCircle, Search, Table, X } from 'lucide-react';
+import { PlusCircle, Search, Table, X, ChevronDown } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { DropdownMenu, DropdownMenuCheckboxItem, DropdownMenuContent, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
+import type { DropdownMenuCheckboxItemProps } from "@radix-ui/react-dropdown-menu"
+
+type Checked = DropdownMenuCheckboxItemProps["checked"]
 
 function DashboardContent() {
   const searchParams = useSearchParams();
@@ -25,11 +29,15 @@ function DashboardContent() {
   const [activeBenchmark, setActiveBenchmark] = useState<Benchmark | null>(null);
 
   const [filters, setFilters] = useState({
-    trial: 'all',
-    blog: 'all',
-    resell: 'all',
     country: 'all',
   });
+  const [booleanFilters, setBooleanFilters] = useState<{ [key: string]: boolean | null }>({
+    offerTrial: null,
+    hasBlog: null,
+    hasResellPanel: null,
+    requiresAccount: null,
+  });
+
   const [sortBy, setSortBy] = useState< 'score-desc' | 'score-asc' | 'lastUpdated-desc' | 'traffic-desc' | 'traffic-asc'>('score-desc');
   
   const [showForm, setShowForm] = useState(false);
@@ -111,16 +119,22 @@ function DashboardContent() {
     }
     handleCancelForm();
   };
+  
+  const handleBooleanFilterChange = (key: string) => (checked: Checked) => {
+    setBooleanFilters(prev => ({ ...prev, [key]: checked === 'indeterminate' ? null : checked }));
+  };
+
 
   const filteredAndSortedBenchmarks = useMemo(() => {
     let filtered = benchmarks.filter((b) =>
       (b.url.toLowerCase().includes(searchTerm.toLowerCase()) ||
       b.notes?.toLowerCase().includes(searchTerm.toLowerCase()) ||
       b.tags?.some(t => t.toLowerCase().includes(searchTerm.toLowerCase()))) &&
-      (filters.trial === 'all' || (filters.trial === 'yes' ? b.offerTrial : !b.offerTrial)) &&
-      (filters.blog === 'all' || (filters.blog === 'yes' ? b.hasBlog : !b.hasBlog)) &&
-      (filters.resell === 'all' || (filters.resell === 'yes' ? b.hasResellPanel : !b.hasResellPanel)) &&
-      (filters.country === 'all' || b.countries?.some(c => c.toLowerCase() === filters.country.toLowerCase()))
+      (filters.country === 'all' || b.countries?.some(c => c.toLowerCase() === filters.country.toLowerCase())) &&
+      (booleanFilters.offerTrial === null || b.offerTrial === booleanFilters.offerTrial) &&
+      (booleanFilters.hasBlog === null || b.hasBlog === booleanFilters.hasBlog) &&
+      (booleanFilters.hasResellPanel === null || b.hasResellPanel === booleanFilters.hasResellPanel) &&
+      (booleanFilters.requiresAccount === null || b.requiresAccount === booleanFilters.requiresAccount)
     );
 
     filtered.sort((a, b) => {
@@ -141,7 +155,7 @@ function DashboardContent() {
     });
 
     return filtered;
-  }, [benchmarks, searchTerm, sortBy, filters]);
+  }, [benchmarks, searchTerm, sortBy, filters, booleanFilters]);
 
   const handleCardClick = (benchmark: Benchmark) => {
     if (activeBenchmark?.id === benchmark.id) {
@@ -199,7 +213,7 @@ function DashboardContent() {
 
        <Card>
             <CardContent className="p-4 space-y-4">
-                 <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
+                 <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-4">
                     <div className="relative flex-grow lg:col-span-1">
                         <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                         <Input
@@ -235,20 +249,31 @@ function DashboardContent() {
                             <SelectItem value="lastUpdated-desc">Last Updated</SelectItem>
                         </SelectContent>
                     </Select>
+
+                     <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                            <Button variant="outline" className="w-full">
+                                Feature Filters <ChevronDown className="ml-2 h-4 w-4" />
+                            </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent className="w-56">
+                            <DropdownMenuLabel>Filter by Features</DropdownMenuLabel>
+                            <DropdownMenuSeparator />
+                            <DropdownMenuCheckboxItem checked={booleanFilters.offerTrial === true} onCheckedChange={handleBooleanFilterChange('offerTrial')}>
+                                Offers Trial
+                            </DropdownMenuCheckboxItem>
+                             <DropdownMenuCheckboxItem checked={booleanFilters.hasBlog === true} onCheckedChange={handleBooleanFilterChange('hasBlog')}>
+                                Has Blog
+                            </DropdownMenuCheckboxItem>
+                             <DropdownMenuCheckboxItem checked={booleanFilters.hasResellPanel === true} onCheckedChange={handleBooleanFilterChange('hasResellPanel')}>
+                                Has Resell Panel
+                            </DropdownMenuCheckboxItem>
+                            <DropdownMenuCheckboxItem checked={booleanFilters.requiresAccount === true} onCheckedChange={handleBooleanFilterChange('requiresAccount')}>
+                                Requires Account
+                            </DropdownMenuCheckboxItem>
+                        </DropdownMenuContent>
+                    </DropdownMenu>
                 </div>
-                 <div className="flex flex-col md:flex-row gap-4 items-center">
-                    <span className="text-sm font-medium">Quick Filters:</span>
-                    <ToggleGroup type="single" value={filters.trial} onValueChange={(value) => value && setFilters(f => ({...f, trial: value}))} size="sm">
-                        <ToggleGroupItem value="all">All Trials</ToggleGroupItem>
-                        <ToggleGroupItem value="yes">Has Trial</ToggleGroupItem>
-                        <ToggleGroupItem value="no">No Trial</ToggleGroupItem>
-                    </ToggleGroup>
-                    <ToggleGroup type="single" value={filters.blog} onValueChange={(value) => value && setFilters(f => ({...f, blog: value}))} size="sm">
-                        <ToggleGroupItem value="all">All Blogs</ToggleGroupItem>
-                        <ToggleGroupItem value="yes">Has Blog</ToggleGroupItem>
-                        <ToggleGroupItem value="no">No Blog</ToggleGroupItem>
-                    </ToggleGroup>
-                 </div>
             </CardContent>
        </Card>
 

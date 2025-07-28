@@ -11,6 +11,7 @@ export type Benchmark = {
   offerTrial: boolean;
   hasBlog: boolean;
   hasResellPanel: boolean;
+  requiresAccount: boolean;
   pricing: string;
   connections: string;
   notes: string;

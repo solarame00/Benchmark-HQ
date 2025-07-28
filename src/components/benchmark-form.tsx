@@ -32,6 +32,7 @@ const formSchema = z.object({
   offerTrial: z.boolean().default(false),
   hasBlog: z.boolean().default(false),
   hasResellPanel: z.boolean().default(false),
+  requiresAccount: z.boolean().default(false),
   pricing: z.string().optional(),
   connections: z.string().optional(),
   notes: z.string().optional(),
@@ -68,6 +69,7 @@ export function BenchmarkForm({ benchmark, onSave, onCancel }: BenchmarkFormProp
           offerTrial: false,
           hasBlog: false,
           hasResellPanel: false,
+          requiresAccount: false,
           pricing: '',
           connections: '',
           notes: '',
@@ -172,7 +174,7 @@ export function BenchmarkForm({ benchmark, onSave, onCancel }: BenchmarkFormProp
             )}
           />
 
-          <div className="grid md:grid-cols-3 gap-6">
+          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-4">
             <FormField control={form.control} name="offerTrial" render={({ field }) => (
                 <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
                   <div className="space-y-0.5"><FormLabel>Offers Trial</FormLabel></div>
@@ -190,6 +192,13 @@ export function BenchmarkForm({ benchmark, onSave, onCancel }: BenchmarkFormProp
             <FormField control={form.control} name="hasResellPanel" render={({ field }) => (
                 <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
                   <div className="space-y-0.5"><FormLabel>Has Resell Panel</FormLabel></div>
+                  <FormControl><Switch checked={field.value} onCheckedChange={field.onChange} /></FormControl>
+                </FormItem>
+              )}
+            />
+             <FormField control={form.control} name="requiresAccount" render={({ field }) => (
+                <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
+                  <div className="space-y-0.5"><FormLabel>Requires Account</FormLabel></div>
                   <FormControl><Switch checked={field.value} onCheckedChange={field.onChange} /></FormControl>
                 </FormItem>
               )}

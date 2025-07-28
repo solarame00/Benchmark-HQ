@@ -86,6 +86,7 @@ export function BenchmarkTable({ benchmarks, loading, onEdit, onDelete, isDetail
     offerTrial: 'Offers Trial?',
     hasBlog: 'Has Blog?',
     hasResellPanel: 'Has Resell Panel?',
+    requiresAccount: 'Requires Account?',
     pricing: 'Pricing',
     connections: 'Connections',
     notes: 'Notes',
