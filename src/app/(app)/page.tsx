@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect, useMemo, Suspense } from 'react';
-import { useSearchParams } from 'next/navigation';
+import { useSearchParams, useRouter } from 'next/navigation';
 import type { Benchmark, BenchmarkInput } from '@/lib/types';
 import { BenchmarkTable } from '@/components/benchmark-table';
 import { BenchmarkForm } from '@/components/benchmark-form';
@@ -16,6 +16,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 
 function DashboardContent() {
   const searchParams = useSearchParams();
+  const router = useRouter();
   const { toast } = useToast();
 
   const [benchmarks, setBenchmarks] = useState<Benchmark[]>([]);
@@ -27,8 +28,9 @@ function DashboardContent() {
     trial: 'all',
     blog: 'all',
     resell: 'all',
+    country: 'all',
   });
-  const [sortBy, setSortBy] = useState<keyof Benchmark | 'score-desc' | 'score-asc' | 'lastUpdated-desc'>('score-desc');
+  const [sortBy, setSortBy] = useState< 'score-desc' | 'score-asc' | 'lastUpdated-desc' | 'traffic-desc' | 'traffic-asc'>('score-desc');
   
   const [showForm, setShowForm] = useState(false);
   const [editingBenchmark, setEditingBenchmark] = useState<Benchmark | null>(null);
@@ -49,6 +51,13 @@ function DashboardContent() {
   useEffect(() => {
     if (searchParams.get('showForm') === 'true') {
         handleAddNew();
+    } else if (showForm) {
+        // If showForm is true but the URL param is gone, close the form.
+        const current = new URL(window.location.href);
+        current.searchParams.delete('showForm');
+        router.replace(current.pathname + current.search);
+        setShowForm(false);
+        setEditingBenchmark(null);
     }
   }, [searchParams]);
 
@@ -77,6 +86,15 @@ function DashboardContent() {
     }
     toast({ title: 'Success', description: 'Benchmark deleted successfully.' });
   }
+  
+  const handleCancelForm = () => {
+    const current = new URL(window.location.href);
+    current.searchParams.delete('showForm');
+    router.replace(current.pathname + current.search);
+    setShowForm(false);
+    setEditingBenchmark(null);
+  }
+
 
   const handleSave = (data: BenchmarkInput, id?: string) => {
     if (id) {
@@ -91,8 +109,7 @@ function DashboardContent() {
       setBenchmarks(prev => [newBenchmark, ...prev]);
       toast({ title: 'Success', description: 'Benchmark added successfully.' });
     }
-    setShowForm(false);
-    setEditingBenchmark(null);
+    handleCancelForm();
   };
 
   const filteredAndSortedBenchmarks = useMemo(() => {
@@ -102,7 +119,8 @@ function DashboardContent() {
       b.tags?.some(t => t.toLowerCase().includes(searchTerm.toLowerCase()))) &&
       (filters.trial === 'all' || (filters.trial === 'yes' ? b.offerTrial : !b.offerTrial)) &&
       (filters.blog === 'all' || (filters.blog === 'yes' ? b.hasBlog : !b.hasBlog)) &&
-      (filters.resell === 'all' || (filters.resell === 'yes' ? b.hasResellPanel : !b.hasResellPanel))
+      (filters.resell === 'all' || (filters.resell === 'yes' ? b.hasResellPanel : !b.hasResellPanel)) &&
+      (filters.country === 'all' || b.countries?.some(c => c.toLowerCase() === filters.country.toLowerCase()))
     );
 
     filtered.sort((a, b) => {
@@ -111,6 +129,10 @@ function DashboardContent() {
                 return (b.score || 0) - (a.score || 0);
             case 'score-asc':
                 return (a.score || 0) - (b.score || 0);
+            case 'traffic-desc':
+                return (b.organicTraffic || 0) - (a.organicTraffic || 0);
+            case 'traffic-asc':
+                return (a.organicTraffic || 0) - (b.organicTraffic || 0);
             case 'lastUpdated-desc':
                 return new Date(b.lastUpdated).getTime() - new Date(a.lastUpdated).getTime();
             default:
@@ -147,10 +169,7 @@ function DashboardContent() {
                     <BenchmarkForm
                         benchmark={editingBenchmark}
                         onSave={handleSave}
-                        onCancel={() => {
-                            setShowForm(false);
-                            setEditingBenchmark(null);
-                        }}
+                        onCancel={handleCancelForm}
                     />
                 </CardContent>
             </Card>
@@ -180,8 +199,8 @@ function DashboardContent() {
 
        <Card>
             <CardContent className="p-4 space-y-4">
-                 <div className="flex flex-col md:flex-row gap-4">
-                    <div className="relative flex-grow">
+                 <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
+                    <div className="relative flex-grow lg:col-span-1">
                         <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                         <Input
                         type="search"
@@ -191,19 +210,34 @@ function DashboardContent() {
                         onChange={(e) => setSearchTerm(e.target.value)}
                         />
                     </div>
+                     <Select onValueChange={(value) => setFilters(f => ({...f, country: value}))} defaultValue={filters.country}>
+                        <SelectTrigger className="w-full">
+                            <SelectValue placeholder="Filter by country" />
+                        </SelectTrigger>
+                        <SelectContent>
+                            <SelectItem value="all">All Countries</SelectItem>
+                            <SelectItem value="FR">France (FR)</SelectItem>
+                            <SelectItem value="US">USA (US)</SelectItem>
+                            <SelectItem value="UK">UK</SelectItem>
+                            <SelectItem value="AU">Australia (AU)</SelectItem>
+                            <SelectItem value="CA">Canada (CA)</SelectItem>
+                        </SelectContent>
+                    </Select>
                     <Select onValueChange={handleSortChange} defaultValue={sortBy}>
-                        <SelectTrigger className="w-full md:w-[180px]">
+                        <SelectTrigger className="w-full">
                             <SelectValue placeholder="Sort by" />
                         </SelectTrigger>
                         <SelectContent>
                             <SelectItem value="score-desc">Score: High to Low</SelectItem>
                             <SelectItem value="score-asc">Score: Low to High</SelectItem>
+                            <SelectItem value="traffic-desc">Traffic: High to Low</SelectItem>
+                            <SelectItem value="traffic-asc">Traffic: Low to High</SelectItem>
                             <SelectItem value="lastUpdated-desc">Last Updated</SelectItem>
                         </SelectContent>
                     </Select>
                 </div>
                  <div className="flex flex-col md:flex-row gap-4 items-center">
-                    <span className="text-sm font-medium">Filters:</span>
+                    <span className="text-sm font-medium">Quick Filters:</span>
                     <ToggleGroup type="single" value={filters.trial} onValueChange={(value) => value && setFilters(f => ({...f, trial: value}))} size="sm">
                         <ToggleGroupItem value="all">All Trials</ToggleGroupItem>
                         <ToggleGroupItem value="yes">Has Trial</ToggleGroupItem>
