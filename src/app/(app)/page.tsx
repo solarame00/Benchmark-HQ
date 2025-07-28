@@ -33,7 +33,7 @@ function DashboardContent() {
   const [filters, setFilters] = useState({
     primaryMarket: 'all',
   });
-  const [booleanFilters, setBooleanFilters] = useState<{ [key: string]: boolean }>({
+  const [booleanFilters, setBooleanFilters] = useState<{ [key: string]: Checked }>({
     offerTrial: false,
     hasBlog: false,
     hasResellPanel: false,
@@ -65,8 +65,8 @@ function DashboardContent() {
       setEditingBenchmark(null);
       setActiveBenchmark(null);
     } else if (!shouldShowForm && showForm) {
-      setShowForm(false);
-      setEditingBenchmark(null);
+      // This case can be triggered by the Cancel button in the form
+      // No need to reset editingBenchmark here as it's handled by onCancel
     }
   }, [searchParams, showForm]);
 
@@ -79,16 +79,15 @@ function DashboardContent() {
   const handleAddNew = () => {
     const current = new URL(window.location.href);
     current.searchParams.set('showForm', 'true');
-    router.push(current.toString());
+    router.push(current.toString(), { scroll: false });
   }
 
   const handleEdit = (benchmark: Benchmark) => {
     setEditingBenchmark(benchmark);
-    setShowForm(true);
     setActiveBenchmark(null);
     const current = new URL(window.location.href);
     current.searchParams.set('showForm', 'true');
-    router.push(current.toString());
+    router.push(current.toString(), { scroll: false });
   }
 
   const handleDelete = (id: string) => {
@@ -102,7 +101,7 @@ function DashboardContent() {
   const handleCancelForm = () => {
     const current = new URL(window.location.href);
     current.searchParams.delete('showForm');
-    router.push(current.toString());
+    router.push(current.toString(), { scroll: false });
     setShowForm(false);
     setEditingBenchmark(null);
   }
@@ -125,21 +124,26 @@ function DashboardContent() {
   };
   
   const handleBooleanFilterChange = (key: string) => (checked: Checked) => {
-    setBooleanFilters(prev => ({ ...prev, [key]: !!checked }));
+    setBooleanFilters(prev => ({ ...prev, [key]: checked === 'indeterminate' ? false : checked }));
   };
 
 
   const filteredAndSortedBenchmarks = useMemo(() => {
-    let filtered = benchmarks.filter((b) =>
+    let filtered = benchmarks.filter((b) => {
+      const searchMatch =
         (b.url.toLowerCase().includes(searchTerm.toLowerCase()) ||
         b.notes?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        b.tags?.some(t => t.toLowerCase().includes(searchTerm.toLowerCase()))) &&
-        (filters.primaryMarket === 'all' || b.primaryMarket?.toLowerCase() === filters.primaryMarket.toLowerCase()) &&
-        (!booleanFilters.offerTrial || b.offerTrial) &&
-        (!booleanFilters.hasBlog || b.hasBlog) &&
-        (!booleanFilters.hasResellPanel || b.hasResellPanel) &&
-        (!booleanFilters.requiresAccount || b.requiresAccount)
-    );
+        b.tags?.some(t => t.toLowerCase().includes(searchTerm.toLowerCase())));
+
+      const marketMatch = filters.primaryMarket === 'all' || b.primaryMarket === filters.primaryMarket;
+      
+      const offerTrialMatch = !booleanFilters.offerTrial || b.offerTrial;
+      const hasBlogMatch = !booleanFilters.hasBlog || b.hasBlog;
+      const hasResellPanelMatch = !booleanFilters.hasResellPanel || b.hasResellPanel;
+      const requiresAccountMatch = !booleanFilters.requiresAccount || b.requiresAccount;
+
+      return searchMatch && marketMatch && offerTrialMatch && hasBlogMatch && hasResellPanelMatch && requiresAccountMatch;
+    });
 
     filtered.sort((a, b) => {
         switch (sortBy) {

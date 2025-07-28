@@ -1,6 +1,7 @@
 
 
 export type Pricing = {
+  currency?: string;
   oneMonth?: string;
   threeMonths?: string;
   sixMonths?: string;

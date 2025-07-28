@@ -77,15 +77,19 @@ export function BenchmarkTable({ benchmarks, loading, onEdit, onDelete, isDetail
     if (key === 'organicTraffic' && typeof value === 'number') {
         return `${value}K`;
     }
-    if (key === 'pricing' && typeof value === 'object' && value !== null) {
-        const pricingEntries = Object.entries(value).filter(([, price]) => price);
+     if (key === 'pricing' && typeof value === 'object' && value !== null) {
+        const pricing = value as Pricing;
+        const currency = pricing.currency || '';
+        const pricingEntries = Object.entries(pricing).filter(([period, price]) => price && period !== 'currency');
+        
         if (pricingEntries.length === 0) return 'N/A';
+        
         return (
              <div className="flex flex-col gap-1">
                 {pricingEntries.map(([period, price]) => (
                     <div key={period}>
                         <span className="font-semibold capitalize">{period.replace(/([A-Z])/g, ' $1').trim()}: </span>
-                        <span>{price as string}</span>
+                        <span>{currency}{price as string}</span>
                     </div>
                 ))}
             </div>

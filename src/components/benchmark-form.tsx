@@ -21,7 +21,7 @@ import type { Benchmark, BenchmarkInput } from '@/lib/types';
 import { Loader2 } from 'lucide-react';
 import { useState } from 'react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { COUNTRIES, CONNECTION_OPTIONS, PAYMENT_STRATEGIES, PAYMENT_METHODS } from '@/lib/constants';
+import { COUNTRIES, CONNECTION_OPTIONS, PAYMENT_STRATEGIES, PAYMENT_METHODS, CURRENCIES } from '@/lib/constants';
 import { RadioGroup, RadioGroupItem } from './ui/radio-group';
 import { Checkbox } from './ui/checkbox';
 
@@ -42,6 +42,7 @@ const formSchema = z.object({
   hasResellPanel: z.boolean().default(false),
   requiresAccount: z.boolean().default(false),
   pricing: z.object({
+    currency: z.string().optional(),
     oneMonth: z.string().optional(),
     threeMonths: z.string().optional(),
     sixMonths: z.string().optional(),
@@ -97,6 +98,7 @@ export function BenchmarkForm({ benchmark, onSave, onCancel }: BenchmarkFormProp
           hasResellPanel: false,
           requiresAccount: false,
           pricing: {
+            currency: '',
             oneMonth: '',
             threeMonths: '',
             sixMonths: '',
@@ -113,7 +115,6 @@ export function BenchmarkForm({ benchmark, onSave, onCancel }: BenchmarkFormProp
   async function onSubmit(values: z.infer<typeof formSchema>) {
     setIsSubmitting(true);
     
-    // Simulate async operation
     await new Promise(resolve => setTimeout(resolve, 500));
 
     const dataToSave: BenchmarkInput = {
@@ -222,24 +223,38 @@ export function BenchmarkForm({ benchmark, onSave, onCancel }: BenchmarkFormProp
           
            <div className="grid gap-4 rounded-lg border p-4">
             <h3 className="font-semibold">Pricing Details</h3>
+             <FormField control={form.control} name="pricing.currency" render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Currency</FormLabel>
+                   <Select onValueChange={field.onChange} defaultValue={field.value}>
+                    <FormControl>
+                      <SelectTrigger><SelectValue placeholder="Select currency" /></SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      {CURRENCIES.map(c => <SelectItem key={c} value={c}>{c}</SelectItem>)}
+                    </SelectContent>
+                  </Select>
+                  <FormMessage />
+                </FormItem>
+              )} />
              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                 <FormField control={form.control} name="pricing.oneMonth" render={({ field }) => (
-                  <FormItem><FormLabel>1 Month Price</FormLabel><FormControl><Input placeholder="e.g. $19" {...field} /></FormControl><FormMessage /></FormItem>
+                  <FormItem><FormLabel>1 Month Price</FormLabel><FormControl><Input type="number" placeholder="e.g. 19" {...field} /></FormControl><FormMessage /></FormItem>
                 )} />
                 <FormField control={form.control} name="pricing.threeMonths" render={({ field }) => (
-                  <FormItem><FormLabel>3 Months Price</FormLabel><FormControl><Input placeholder="e.g. $49" {...field} /></FormControl><FormMessage /></FormItem>
+                  <FormItem><FormLabel>3 Months Price</FormLabel><FormControl><Input type="number" placeholder="e.g. 49" {...field} /></FormControl><FormMessage /></FormItem>
                 )} />
                 <FormField control={form.control} name="pricing.sixMonths" render={({ field }) => (
-                  <FormItem><FormLabel>6 Months Price</FormLabel><FormControl><Input placeholder="e.g. $89" {...field} /></FormControl><FormMessage /></FormItem>
+                  <FormItem><FormLabel>6 Months Price</FormLabel><FormControl><Input type="number" placeholder="e.g. 89" {...field} /></FormControl><FormMessage /></FormItem>
                 )} />
                 <FormField control={form.control} name="pricing.twelveMonths" render={({ field }) => (
-                  <FormItem><FormLabel>12 Months Price</FormLabel><FormControl><Input placeholder="e.g. $159" {...field} /></FormControl><FormMessage /></FormItem>
+                  <FormItem><FormLabel>12 Months Price</FormLabel><FormControl><Input type="number" placeholder="e.g. 159" {...field} /></FormControl><FormMessage /></FormItem>
                 )} />
                 <FormField control={form.control} name="pricing.twoYear" render={({ field }) => (
-                  <FormItem><FormLabel>2 Year Price</FormLabel><FormControl><Input placeholder="e.g. $299" {...field} /></FormControl><FormMessage /></FormItem>
+                  <FormItem><FormLabel>2 Year Price</FormLabel><FormControl><Input type="number" placeholder="e.g. 299" {...field} /></FormControl><FormMessage /></FormItem>
                 )} />
                 <FormField control={form.control} name="pricing.lifetime" render={({ field }) => (
-                  <FormItem><FormLabel>Lifetime Price</FormLabel><FormControl><Input placeholder="e.g. $499" {...field} /></FormControl><FormMessage /></FormItem>
+                  <FormItem><FormLabel>Lifetime Price</FormLabel><FormControl><Input type="number" placeholder="e.g. 499" {...field} /></FormControl><FormMessage /></FormItem>
                 )} />
              </div>
           </div>

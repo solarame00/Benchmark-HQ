@@ -35,3 +35,5 @@ export const PAYMENT_METHODS = [
     'PayPal',
     'Crypto'
 ];
+
+export const CURRENCIES = ['$', '£', '€'];
