@@ -4,7 +4,9 @@ export type Benchmark = {
   url: string;
   score: number;
   organicTraffic: number;
-  countries: string[];
+  primaryMarket: string;
+  secondaryMarket?: string;
+  tertiaryMarket?: string;
   startTimeline: string;
   paymentMethod: string;
   paymentRedirect: string;

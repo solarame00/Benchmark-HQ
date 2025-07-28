@@ -20,12 +20,17 @@ import { Switch } from '@/components/ui/switch';
 import type { Benchmark, BenchmarkInput } from '@/lib/types';
 import { Loader2 } from 'lucide-react';
 import { useState } from 'react';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { COUNTRIES } from '@/lib/constants';
+
 
 const formSchema = z.object({
   url: z.string().optional(),
   score: z.coerce.number().optional(),
   organicTraffic: z.coerce.number().optional(),
-  countries: z.string().optional(),
+  primaryMarket: z.string().min(1, { message: "Primary Market is required." }),
+  secondaryMarket: z.string().optional(),
+  tertiaryMarket: z.string().optional(),
   startTimeline: z.string().optional(),
   paymentMethod: z.string().optional(),
   paymentRedirect: z.string().optional(),
@@ -53,16 +58,17 @@ export function BenchmarkForm({ benchmark, onSave, onCancel }: BenchmarkFormProp
     defaultValues: benchmark
       ? {
           ...benchmark,
-          score: benchmark.score || '',
-          organicTraffic: benchmark.organicTraffic || '',
-          countries: benchmark.countries?.join('\n') || '',
+          score: benchmark.score || undefined,
+          organicTraffic: benchmark.organicTraffic || undefined,
           tags: benchmark.tags?.join(', ') || '',
         }
       : {
           url: '',
-          score: '',
-          organicTraffic: '',
-          countries: '',
+          score: undefined,
+          organicTraffic: undefined,
+          primaryMarket: '',
+          secondaryMarket: '',
+          tertiaryMarket: '',
           startTimeline: '',
           paymentMethod: '',
           paymentRedirect: '',
@@ -88,7 +94,9 @@ export function BenchmarkForm({ benchmark, onSave, onCancel }: BenchmarkFormProp
       url: values.url || '',
       score: values.score || 0,
       organicTraffic: values.organicTraffic || 0,
-      countries: values.countries ? values.countries.split('\n').map(item => item.trim()).filter(Boolean) : [],
+      primaryMarket: values.primaryMarket,
+      secondaryMarket: values.secondaryMarket || '',
+      tertiaryMarket: values.tertiaryMarket || '',
       startTimeline: values.startTimeline || '',
       paymentMethod: values.paymentMethod || '',
       paymentRedirect: values.paymentRedirect || '',
@@ -139,26 +147,62 @@ export function BenchmarkForm({ benchmark, onSave, onCancel }: BenchmarkFormProp
             />
           </div>
 
-          <div className="grid md:grid-cols-2 gap-6">
-            <FormField control={form.control} name="countries" render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Countries</FormLabel>
-                  <FormControl><Textarea placeholder="USA&#10;Canada&#10;UK" {...field} /></FormControl>
-                  <FormDescription>Enter one country per line.</FormDescription>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <FormField control={form.control} name="paymentMethod" render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Payment Method(s)</FormLabel>
-                  <FormControl><Textarea placeholder="Stripe&#10;PayPal&#10;Crypto" {...field} /></FormControl>
-                   <FormDescription>Enter one payment method per line.</FormDescription>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
+          <div className="grid md:grid-cols-3 gap-6">
+            <FormField control={form.control} name="primaryMarket" render={({ field }) => (
+              <FormItem>
+                <FormLabel>Primary Market</FormLabel>
+                <Select onValueChange={field.onChange} defaultValue={field.value}>
+                  <FormControl>
+                    <SelectTrigger><SelectValue placeholder="Select a country" /></SelectTrigger>
+                  </FormControl>
+                  <SelectContent>
+                    {COUNTRIES.map(c => <SelectItem key={c} value={c}>{c}</SelectItem>)}
+                  </SelectContent>
+                </Select>
+                <FormMessage />
+              </FormItem>
+            )} />
+            <FormField control={form.control} name="secondaryMarket" render={({ field }) => (
+              <FormItem>
+                <FormLabel>Secondary Market</FormLabel>
+                <Select onValueChange={field.onChange} defaultValue={field.value}>
+                  <FormControl>
+                    <SelectTrigger><SelectValue placeholder="Optional" /></SelectTrigger>
+                  </FormControl>
+                  <SelectContent>
+                     <SelectItem value="">None</SelectItem>
+                    {COUNTRIES.map(c => <SelectItem key={c} value={c}>{c}</SelectItem>)}
+                  </SelectContent>
+                </Select>
+                <FormMessage />
+              </FormItem>
+            )} />
+             <FormField control={form.control} name="tertiaryMarket" render={({ field }) => (
+              <FormItem>
+                <FormLabel>Tertiary Market</FormLabel>
+                <Select onValueChange={field.onChange} defaultValue={field.value}>
+                  <FormControl>
+                    <SelectTrigger><SelectValue placeholder="Optional" /></SelectTrigger>
+                  </FormControl>
+                  <SelectContent>
+                    <SelectItem value="">None</SelectItem>
+                    {COUNTRIES.map(c => <SelectItem key={c} value={c}>{c}</SelectItem>)}
+                  </SelectContent>
+                </Select>
+                <FormMessage />
+              </FormItem>
+            )} />
           </div>
+
+          <FormField control={form.control} name="paymentMethod" render={({ field }) => (
+              <FormItem>
+                <FormLabel>Payment Method(s)</FormLabel>
+                <FormControl><Textarea placeholder="Stripe&#10;PayPal&#10;Crypto" {...field} /></FormControl>
+                  <FormDescription>Enter one payment method per line.</FormDescription>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
           
           <FormField control={form.control} name="pricing" render={({ field }) => (
               <FormItem><FormLabel>Prices</FormLabel><FormControl><Textarea placeholder="1 Month: $10&#10;3 Months: $25" {...field} /></FormControl><FormMessage /></FormItem>

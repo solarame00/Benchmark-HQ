@@ -19,6 +19,8 @@ type BenchmarkCardProps = {
 };
 
 export function BenchmarkCard({ benchmark, isActive, onClick, onEdit, onDelete }: BenchmarkCardProps) {
+    const allMarkets = [benchmark.primaryMarket, benchmark.secondaryMarket, benchmark.tertiaryMarket].filter(Boolean);
+    
     return (
         <AlertDialog>
             <Card 
@@ -81,8 +83,8 @@ export function BenchmarkCard({ benchmark, isActive, onClick, onEdit, onDelete }
                 </CardContent>
                 <CardFooter>
                      <div className="flex flex-wrap gap-1">
-                        {benchmark.countries?.slice(0, 3).map((country) => <Badge key={country} variant="outline">{country}</Badge>)}
-                        {benchmark.countries?.length > 3 && <Badge variant="outline">+{benchmark.countries.length - 3}</Badge>}
+                        {allMarkets.slice(0, 3).map((market) => <Badge key={market} variant="outline">{market}</Badge>)}
+                        {allMarkets.length > 3 && <Badge variant="outline">+{allMarkets.length - 3}</Badge>}
                      </div>
                 </CardFooter>
             </Card>

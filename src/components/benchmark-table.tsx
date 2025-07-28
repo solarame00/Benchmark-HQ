@@ -1,3 +1,4 @@
+
 'use client';
 
 import type { Benchmark } from '@/lib/types';
@@ -79,7 +80,9 @@ export function BenchmarkTable({ benchmarks, loading, onEdit, onDelete, isDetail
     url: 'URL',
     score: 'Score',
     organicTraffic: 'Organic Traffic (K)',
-    countries: 'Countries',
+    primaryMarket: 'Primary Market',
+    secondaryMarket: 'Secondary Market',
+    tertiaryMarket: 'Tertiary Market',
     startTimeline: 'Start Timeline',
     paymentMethod: 'Payment Methods',
     paymentRedirect: 'Payment Redirect',
@@ -153,7 +156,7 @@ export function BenchmarkTable({ benchmarks, loading, onEdit, onDelete, isDetail
           <TableRow>
             <TableHead>Website</TableHead>
             <TableHead>Score</TableHead>
-            <TableHead>Traffic (K)</TableHead>
+            <TableHead>Primary Market</TableHead>
             <TableHead>Trial</TableHead>
             <TableHead>Tags</TableHead>
             <TableHead>Last Updated</TableHead>
@@ -183,7 +186,7 @@ export function BenchmarkTable({ benchmarks, loading, onEdit, onDelete, isDetail
                     {b.score || 0}
                   </Badge>
                 </TableCell>
-                <TableCell>{b.organicTraffic || 0}</TableCell>
+                <TableCell>{b.primaryMarket}</TableCell>
                 <TableCell>
                   {b.offerTrial ? (
                     <CheckCircle className="h-5 w-5 text-green-500" />

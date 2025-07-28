@@ -16,6 +16,7 @@ import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { DropdownMenu, DropdownMenuCheckboxItem, DropdownMenuContent, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import type { DropdownMenuCheckboxItemProps } from "@radix-ui/react-dropdown-menu"
+import { COUNTRIES } from '@/lib/constants';
 
 type Checked = DropdownMenuCheckboxItemProps["checked"]
 
@@ -30,7 +31,7 @@ function DashboardContent() {
   const [activeBenchmark, setActiveBenchmark] = useState<Benchmark | null>(null);
 
   const [filters, setFilters] = useState({
-    country: 'all',
+    primaryMarket: 'all',
   });
   const [booleanFilters, setBooleanFilters] = useState<{ [key: string]: boolean }>({
     offerTrial: false,
@@ -68,7 +69,7 @@ function DashboardContent() {
         setShowForm(false);
         setEditingBenchmark(null);
     }
-  }, [searchParams]);
+  }, [searchParams, showForm, router]);
 
   useEffect(() => {
     if(!loading) {
@@ -131,7 +132,7 @@ function DashboardContent() {
         (b.url.toLowerCase().includes(searchTerm.toLowerCase()) ||
         b.notes?.toLowerCase().includes(searchTerm.toLowerCase()) ||
         b.tags?.some(t => t.toLowerCase().includes(searchTerm.toLowerCase()))) &&
-        (filters.country === 'all' || b.countries?.some(c => c.toLowerCase() === filters.country.toLowerCase())) &&
+        (filters.primaryMarket === 'all' || b.primaryMarket?.toLowerCase() === filters.primaryMarket.toLowerCase()) &&
         (!booleanFilters.offerTrial || b.offerTrial) &&
         (!booleanFilters.hasBlog || b.hasBlog) &&
         (!booleanFilters.hasResellPanel || b.hasResellPanel) &&
@@ -177,7 +178,7 @@ function DashboardContent() {
                 <CardHeader>
                 <CardTitle>{editingBenchmark ? 'Edit Benchmark' : 'Add New Benchmark'}</CardTitle>
                 <CardDescription>
-                    Fill in the details of the competitor website. All fields are optional.
+                    Fill in the details of the competitor website. All fields are optional, except Primary Market.
                 </CardDescription>
                 </CardHeader>
                 <CardContent>
@@ -225,17 +226,15 @@ function DashboardContent() {
                         onChange={(e) => setSearchTerm(e.target.value)}
                         />
                     </div>
-                     <Select onValueChange={(value) => setFilters(f => ({...f, country: value}))} defaultValue={filters.country}>
+                     <Select onValueChange={(value) => setFilters(f => ({...f, primaryMarket: value}))} defaultValue={filters.primaryMarket}>
                         <SelectTrigger className="w-full">
-                            <SelectValue placeholder="Filter by country" />
+                            <SelectValue placeholder="Filter by primary market" />
                         </SelectTrigger>
                         <SelectContent>
-                            <SelectItem value="all">All Countries</SelectItem>
-                            <SelectItem value="FR">France (FR)</SelectItem>
-                            <SelectItem value="US">USA (US)</SelectItem>
-                            <SelectItem value="UK">UK</SelectItem>
-                            <SelectItem value="AU">Australia (AU)</SelectItem>
-                            <SelectItem value="CA">Canada (CA)</SelectItem>
+                            <SelectItem value="all">All Primary Markets</SelectItem>
+                            {COUNTRIES.map(country => (
+                              <SelectItem key={country} value={country}>{country}</SelectItem>
+                            ))}
                         </SelectContent>
                     </Select>
                     <Select onValueChange={handleSortChange} defaultValue={sortBy}>
