@@ -170,7 +170,6 @@ export function BenchmarkForm({ benchmark, onSave, onCancel }: BenchmarkFormProp
                     <SelectTrigger><SelectValue placeholder="Optional" /></SelectTrigger>
                   </FormControl>
                   <SelectContent>
-                     <SelectItem value="">None</SelectItem>
                     {COUNTRIES.map(c => <SelectItem key={c} value={c}>{c}</SelectItem>)}
                   </SelectContent>
                 </Select>
@@ -185,7 +184,6 @@ export function BenchmarkForm({ benchmark, onSave, onCancel }: BenchmarkFormProp
                     <SelectTrigger><SelectValue placeholder="Optional" /></SelectTrigger>
                   </FormControl>
                   <SelectContent>
-                    <SelectItem value="">None</SelectItem>
                     {COUNTRIES.map(c => <SelectItem key={c} value={c}>{c}</SelectItem>)}
                   </SelectContent>
                 </Select>
