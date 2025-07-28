@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState, useEffect, useMemo, Suspense } from 'react';
@@ -31,11 +32,11 @@ function DashboardContent() {
   const [filters, setFilters] = useState({
     country: 'all',
   });
-  const [booleanFilters, setBooleanFilters] = useState<{ [key: string]: boolean | null }>({
-    offerTrial: null,
-    hasBlog: null,
-    hasResellPanel: null,
-    requiresAccount: null,
+  const [booleanFilters, setBooleanFilters] = useState<{ [key: string]: boolean }>({
+    offerTrial: false,
+    hasBlog: false,
+    hasResellPanel: false,
+    requiresAccount: false,
   });
 
   const [sortBy, setSortBy] = useState< 'score-desc' | 'score-asc' | 'lastUpdated-desc' | 'traffic-desc' | 'traffic-asc'>('score-desc');
@@ -121,20 +122,20 @@ function DashboardContent() {
   };
   
   const handleBooleanFilterChange = (key: string) => (checked: Checked) => {
-    setBooleanFilters(prev => ({ ...prev, [key]: checked === 'indeterminate' ? null : checked }));
+    setBooleanFilters(prev => ({ ...prev, [key]: !!checked }));
   };
 
 
   const filteredAndSortedBenchmarks = useMemo(() => {
     let filtered = benchmarks.filter((b) =>
-      (b.url.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      b.notes?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      b.tags?.some(t => t.toLowerCase().includes(searchTerm.toLowerCase()))) &&
-      (filters.country === 'all' || b.countries?.some(c => c.toLowerCase() === filters.country.toLowerCase())) &&
-      (booleanFilters.offerTrial === null || b.offerTrial === booleanFilters.offerTrial) &&
-      (booleanFilters.hasBlog === null || b.hasBlog === booleanFilters.hasBlog) &&
-      (booleanFilters.hasResellPanel === null || b.hasResellPanel === booleanFilters.hasResellPanel) &&
-      (booleanFilters.requiresAccount === null || b.requiresAccount === booleanFilters.requiresAccount)
+        (b.url.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        b.notes?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        b.tags?.some(t => t.toLowerCase().includes(searchTerm.toLowerCase()))) &&
+        (filters.country === 'all' || b.countries?.some(c => c.toLowerCase() === filters.country.toLowerCase())) &&
+        (!booleanFilters.offerTrial || b.offerTrial) &&
+        (!booleanFilters.hasBlog || b.hasBlog) &&
+        (!booleanFilters.hasResellPanel || b.hasResellPanel) &&
+        (!booleanFilters.requiresAccount || b.requiresAccount)
     );
 
     filtered.sort((a, b) => {
@@ -256,19 +257,19 @@ function DashboardContent() {
                                 Feature Filters <ChevronDown className="ml-2 h-4 w-4" />
                             </Button>
                         </DropdownMenuTrigger>
-                        <DropdownMenuContent className="w-56">
+                        <DropdownMenuContent className="w-56" onSelect={(e) => e.preventDefault()}>
                             <DropdownMenuLabel>Filter by Features</DropdownMenuLabel>
                             <DropdownMenuSeparator />
-                            <DropdownMenuCheckboxItem checked={booleanFilters.offerTrial === true} onCheckedChange={handleBooleanFilterChange('offerTrial')}>
+                            <DropdownMenuCheckboxItem checked={booleanFilters.offerTrial} onCheckedChange={handleBooleanFilterChange('offerTrial')}>
                                 Offers Trial
                             </DropdownMenuCheckboxItem>
-                             <DropdownMenuCheckboxItem checked={booleanFilters.hasBlog === true} onCheckedChange={handleBooleanFilterChange('hasBlog')}>
+                             <DropdownMenuCheckboxItem checked={booleanFilters.hasBlog} onCheckedChange={handleBooleanFilterChange('hasBlog')}>
                                 Has Blog
                             </DropdownMenuCheckboxItem>
-                             <DropdownMenuCheckboxItem checked={booleanFilters.hasResellPanel === true} onCheckedChange={handleBooleanFilterChange('hasResellPanel')}>
+                             <DropdownMenuCheckboxItem checked={booleanFilters.hasResellPanel} onCheckedChange={handleBooleanFilterChange('hasResellPanel')}>
                                 Has Resell Panel
                             </DropdownMenuCheckboxItem>
-                            <DropdownMenuCheckboxItem checked={booleanFilters.requiresAccount === true} onCheckedChange={handleBooleanFilterChange('requiresAccount')}>
+                            <DropdownMenuCheckboxItem checked={booleanFilters.requiresAccount} onCheckedChange={handleBooleanFilterChange('requiresAccount')}>
                                 Requires Account
                             </DropdownMenuCheckboxItem>
                         </DropdownMenuContent>
