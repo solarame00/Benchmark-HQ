@@ -100,6 +100,8 @@ export function BenchmarkForm({ benchmark, onSave, onCancel }: BenchmarkFormProp
     if (benchmark) {
       form.reset({
         ...benchmark,
+        score: benchmark.score || undefined,
+        organicTraffic: benchmark.organicTraffic || undefined,
         tags: benchmark.tags?.join(', ') || '',
         pricing: {
           currency: benchmark.pricing?.currency || '',
