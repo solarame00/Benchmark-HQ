@@ -122,15 +122,19 @@ function DashboardContent() {
 
   const handleSave = async (data: BenchmarkInput, id?: string) => {
     try {
+      let message = '';
       if (id) {
         await updateBenchmark(id, data);
-        toast({ title: 'Success', description: 'Benchmark updated successfully.' });
+        message = 'Benchmark updated successfully.';
       } else {
         await addBenchmark(data);
-        toast({ title: 'Success', description: 'Benchmark added successfully.' });
+        message = 'Benchmark added successfully.';
       }
+      
       handleCancelForm();
       await loadBenchmarks(); // Refresh data from Firestore
+      toast({ title: 'Success', description: message });
+
     } catch (error) {
        console.error("Failed to save benchmark:", error);
        toast({
