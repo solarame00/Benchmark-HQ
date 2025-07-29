@@ -1,7 +1,7 @@
 
 'use client';
 
-import { useState, useEffect, useMemo, Suspense } from 'react';
+import { useState, useEffect, useMemo, Suspense, startTransition } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import type { Benchmark, BenchmarkInput } from '@/lib/types';
 import { BenchmarkTable } from '@/components/benchmark-table';
@@ -18,7 +18,7 @@ import { DropdownMenu, DropdownMenuCheckboxItem, DropdownMenuContent, DropdownMe
 import type { DropdownMenuCheckboxItemProps } from "@radix-ui/react-dropdown-menu"
 import { COUNTRIES } from '@/lib/constants';
 import { MissingApiKeyAlert } from '@/components/missing-api-key-alert';
-import { getBenchmarks } from '@/lib/actions';
+import { getBenchmarks, addBenchmark, updateBenchmark, deleteBenchmark } from '@/lib/actions';
 
 
 type Checked = DropdownMenuCheckboxItemProps["checked"]
@@ -49,41 +49,34 @@ function DashboardContent() {
   const [editingBenchmark, setEditingBenchmark] = useState<Benchmark | null>(null);
   const [viewMode, setViewMode] = useState<'cards' | 'table'>('cards');
 
-  useEffect(() => {
-    const shouldShowForm = searchParams.get('showForm') === 'true';
-    setShowForm(shouldShowForm);
-    // This logic is now handled by the handleAddNew and handleEdit functions
-    // to prevent bugs where editing state is incorrectly cleared.
-  }, [searchParams]);
+  const showFormParam = searchParams.get('showForm') === 'true';
 
   useEffect(() => {
-    // Fetch benchmarks from Firestore when the component mounts
-    async function loadBenchmarks() {
-      setLoading(true);
-      try {
-        const firestoreBenchmarks = await getBenchmarks();
+    setShowForm(showFormParam);
+  }, [showFormParam]);
+
+  const loadBenchmarks = async () => {
+    setLoading(true);
+    try {
+      const firestoreBenchmarks = await getBenchmarks();
+      startTransition(() => {
         setBenchmarks(firestoreBenchmarks);
-      } catch (error) {
-        console.error("Failed to load benchmarks from Firestore", error);
-        toast({
-          variant: "destructive",
-          title: "Error",
-          description: "Could not load benchmarks from the database.",
-        });
-      }
+      });
+    } catch (error) {
+      console.error("Failed to load benchmarks from Firestore", error);
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "Could not load benchmarks from the database.",
+      });
+    } finally {
       setLoading(false);
     }
+  };
+  
+  useEffect(() => {
     loadBenchmarks();
   }, []);
-  
-  
-
-  useEffect(() => {
-    // We will replace this with Firestore saving logic in the next step.
-    if(!loading) {
-        // localStorage.setItem('benchmarks', JSON.stringify(benchmarks));
-    }
-  }, [benchmarks, loading]);
 
   const handleAddNew = () => {
     setEditingBenchmark(null);
@@ -101,12 +94,22 @@ function DashboardContent() {
     router.push(current.toString(), { scroll: false });
   }
 
-  const handleDelete = (id: string) => {
-    setBenchmarks(prev => prev.filter(b => b.id !== id));
-    if (activeBenchmark?.id === id) {
-        setActiveBenchmark(null);
+  const handleDelete = async (id: string) => {
+    try {
+      await deleteBenchmark(id);
+      if (activeBenchmark?.id === id) {
+          setActiveBenchmark(null);
+      }
+      toast({ title: 'Success', description: 'Benchmark deleted successfully.' });
+      await loadBenchmarks(); // Refresh data from Firestore
+    } catch (error) {
+       console.error("Failed to delete benchmark:", error);
+       toast({
+         variant: "destructive",
+         title: "Error",
+         description: "Could not delete the benchmark.",
+       });
     }
-    toast({ title: 'Success', description: 'Benchmark deleted successfully.' });
   }
   
   const handleCancelForm = () => {
@@ -117,20 +120,25 @@ function DashboardContent() {
   }
 
 
-  const handleSave = (data: BenchmarkInput, id?: string) => {
-    if (id) {
-      setBenchmarks(prev => prev.map(b => b.id === id ? { ...b, ...data, lastUpdated: new Date().toISOString() } : b));
-      toast({ title: 'Success', description: 'Benchmark updated successfully.' });
-    } else {
-      const newBenchmark: Benchmark = {
-        id: new Date().toISOString(),
-        ...data,
-        lastUpdated: new Date().toISOString()
-      };
-      setBenchmarks(prev => [newBenchmark, ...prev]);
-      toast({ title: 'Success', description: 'Benchmark added successfully.' });
+  const handleSave = async (data: BenchmarkInput, id?: string) => {
+    try {
+      if (id) {
+        await updateBenchmark(id, data);
+        toast({ title: 'Success', description: 'Benchmark updated successfully.' });
+      } else {
+        await addBenchmark(data);
+        toast({ title: 'Success', description: 'Benchmark added successfully.' });
+      }
+      handleCancelForm();
+      await loadBenchmarks(); // Refresh data from Firestore
+    } catch (error) {
+       console.error("Failed to save benchmark:", error);
+       toast({
+         variant: "destructive",
+         title: "Error",
+         description: "Could not save the benchmark to the database.",
+       });
     }
-    handleCancelForm();
   };
   
   const handleBooleanFilterChange = (key: string) => (checked: Checked) => {
