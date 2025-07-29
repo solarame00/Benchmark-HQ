@@ -1,13 +1,15 @@
 
 'use server';
 
-import { collection, getDocs, doc, setDoc, deleteDoc, Timestamp, addDoc, updateDoc } from 'firebase/firestore';
+import { collection, getDocs, doc, deleteDoc, Timestamp, addDoc, updateDoc } from 'firebase/firestore';
 import { db } from './firebase';
 import type { Benchmark, BenchmarkInput } from './types';
 
 // This function fetches all benchmarks from the 'benchmarks' collection in Firestore.
 export async function getBenchmarks(): Promise<Benchmark[]> {
   try {
+    // Ensure you have a 'benchmarks' collection in your Firestore database.
+    // If not, this will return an empty array, which is expected.
     const snapshot = await getDocs(collection(db, 'benchmarks'));
     if (snapshot.empty) {
       return [];
@@ -37,6 +39,25 @@ export async function addBenchmark(benchmarkData: BenchmarkInput) {
   try {
     const dataWithTimestamp = {
       ...benchmarkData,
+      // Ensure all fields have a default value if they are not provided
+      url: benchmarkData.url || '',
+      score: benchmarkData.score || 0,
+      organicTraffic: benchmarkData.organicTraffic || 0,
+      primaryMarket: benchmarkData.primaryMarket || '',
+      secondaryMarket: benchmarkData.secondaryMarket || '',
+      tertiaryMarket: benchmarkData.tertiaryMarket || '',
+      startTimeline: benchmarkData.startTimeline || '',
+      paymentStrategy: benchmarkData.paymentStrategy || '',
+      paymentMethods: benchmarkData.paymentMethods || [],
+      paymentRedirect: benchmarkData.paymentRedirect || '',
+      offerTrial: benchmarkData.offerTrial || false,
+      hasBlog: benchmarkData.hasBlog || false,
+      hasResellPanel: benchmarkData.hasResellPanel || false,
+      requiresAccount: benchmarkData.requiresAccount || false,
+      pricing: benchmarkData.pricing || {},
+      connections: benchmarkData.connections || '',
+      notes: benchmarkData.notes || '',
+      tags: benchmarkData.tags || [],
       lastUpdated: Timestamp.now(),
     };
     await addDoc(collection(db, 'benchmarks'), dataWithTimestamp);
@@ -54,6 +75,7 @@ export async function updateBenchmark(id: string, benchmarkData: BenchmarkInput)
       ...benchmarkData,
       lastUpdated: Timestamp.now(),
     };
+    // updateDoc will only update the fields you provide, which is safe.
     await updateDoc(docRef, dataWithTimestamp);
   } catch (error) {
     console.error("Error updating benchmark: ", error);
