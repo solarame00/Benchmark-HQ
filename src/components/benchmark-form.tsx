@@ -174,7 +174,7 @@ export function BenchmarkForm({ benchmark, onSave, onCancel }: BenchmarkFormProp
             <FormField control={form.control} name="score" render={({ field }) => (
                 <FormItem>
                   <FormLabel>Score Authority</FormLabel>
-                  <FormControl><Input type="number" {...field} /></FormControl>
+                  <FormControl><Input type="number" {...field} value={field.value ?? ''} /></FormControl>
                   <FormMessage />
                 </FormItem>
               )}
@@ -182,7 +182,7 @@ export function BenchmarkForm({ benchmark, onSave, onCancel }: BenchmarkFormProp
             <FormField control={form.control} name="organicTraffic" render={({ field }) => (
                 <FormItem>
                   <FormLabel>Traffic</FormLabel>
-                  <FormControl><Input type="number" {...field} /></FormControl>
+                  <FormControl><Input type="number" {...field} value={field.value ?? ''} /></FormControl>
                   <FormMessage />
                 </FormItem>
               )}
@@ -283,7 +283,7 @@ export function BenchmarkForm({ benchmark, onSave, onCancel }: BenchmarkFormProp
                   <FormControl>
                     <RadioGroup
                       onValueChange={field.onChange}
-                      defaultValue={field.value}
+                      value={field.value}
                       className="flex flex-col space-y-1"
                     >
                       {PAYMENT_STRATEGIES.map((strategy) => (
