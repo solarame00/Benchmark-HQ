@@ -67,63 +67,34 @@ export function BenchmarkForm({ benchmark, onSave, onCancel }: BenchmarkFormProp
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      url: '',
-      score: undefined,
-      organicTraffic: undefined,
-      primaryMarket: '',
-      secondaryMarket: '',
-      tertiaryMarket: '',
-      startTimeline: '',
-      paymentStrategy: '',
-      paymentMethods: [],
-      paymentRedirect: '',
-      offerTrial: false,
-      hasBlog: false,
-      hasResellPanel: false,
-      requiresAccount: false,
+      url: benchmark?.url || '',
+      score: benchmark?.score || undefined,
+      organicTraffic: benchmark?.organicTraffic || undefined,
+      primaryMarket: benchmark?.primaryMarket || '',
+      secondaryMarket: benchmark?.secondaryMarket || '',
+      tertiaryMarket: benchmark?.tertiaryMarket || '',
+      startTimeline: benchmark?.startTimeline || '',
+      paymentStrategy: benchmark?.paymentStrategy || '',
+      paymentMethods: benchmark?.paymentMethods || [],
+      paymentRedirect: benchmark?.paymentRedirect || '',
+      offerTrial: benchmark?.offerTrial || false,
+      hasBlog: benchmark?.hasBlog || false,
+      hasResellPanel: benchmark?.hasResellPanel || false,
+      requiresAccount: benchmark?.requiresAccount || false,
       pricing: {
-        currency: '',
-        oneMonth: '',
-        threeMonths: '',
-        sixMonths: '',
-        twelveMonths: '',
-        twoYear: '',
-        lifetime: '',
+        currency: benchmark?.pricing?.currency || '',
+        oneMonth: benchmark?.pricing?.oneMonth || '',
+        threeMonths: benchmark?.pricing?.threeMonths || '',
+        sixMonths: benchmark?.pricing?.sixMonths || '',
+        twelveMonths: benchmark?.pricing?.twelveMonths || '',
+        twoYear: benchmark?.pricing?.twoYear || '',
+        lifetime: benchmark?.pricing?.lifetime || '',
       },
-      connections: '',
-      notes: '',
-      tags: '',
+      connections: benchmark?.connections || '',
+      notes: benchmark?.notes || '',
+      tags: benchmark?.tags?.join(', ') || '',
     },
   });
-
-  useEffect(() => {
-    if (benchmark) {
-      form.reset({
-        ...benchmark,
-        score: benchmark.score || undefined,
-        organicTraffic: benchmark.organicTraffic || undefined,
-        tags: benchmark.tags?.join(', ') || '',
-        pricing: {
-          currency: benchmark.pricing?.currency || '',
-          oneMonth: benchmark.pricing?.oneMonth || '',
-          threeMonths: benchmark.pricing?.threeMonths || '',
-          sixMonths: benchmark.pricing?.sixMonths || '',
-          twelveMonths: benchmark.pricing?.twelveMonths || '',
-          twoYear: benchmark.pricing?.twoYear || '',
-          lifetime: benchmark.pricing?.lifetime || '',
-        },
-      });
-    } else {
-        form.reset({
-            url: '', score: undefined, organicTraffic: undefined, primaryMarket: '',
-            secondaryMarket: '', tertiaryMarket: '', startTimeline: '', paymentStrategy: '',
-            paymentMethods: [], paymentRedirect: '', offerTrial: false, hasBlog: false,
-            hasResellPanel: false, requiresAccount: false,
-            pricing: { currency: '', oneMonth: '', threeMonths: '', sixMonths: '', twelveMonths: '', twoYear: '', lifetime: '' },
-            connections: '', notes: '', tags: '',
-        });
-    }
-  }, [benchmark, form]);
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
     setIsSubmitting(true);

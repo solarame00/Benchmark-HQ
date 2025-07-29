@@ -61,10 +61,7 @@ function DashboardContent() {
   useEffect(() => {
     const shouldShowForm = searchParams.get('showForm') === 'true';
     setShowForm(shouldShowForm);
-    if (shouldShowForm && !editingBenchmark) {
-        setActiveBenchmark(null);
-    }
-  }, [searchParams, editingBenchmark]);
+  }, [searchParams]);
 
   useEffect(() => {
     if(!loading) {
@@ -186,6 +183,7 @@ function DashboardContent() {
                 </CardHeader>
                 <CardContent>
                     <BenchmarkForm
+                        key={editingBenchmark ? editingBenchmark.id : 'new'}
                         benchmark={editingBenchmark}
                         onSave={handleSave}
                         onCancel={handleCancelForm}
