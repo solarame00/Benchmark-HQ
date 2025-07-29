@@ -18,6 +18,7 @@ import { DropdownMenu, DropdownMenuCheckboxItem, DropdownMenuContent, DropdownMe
 import type { DropdownMenuCheckboxItemProps } from "@radix-ui/react-dropdown-menu"
 import { COUNTRIES } from '@/lib/constants';
 import { MissingApiKeyAlert } from '@/components/missing-api-key-alert';
+import { getBenchmarks } from '@/lib/actions';
 
 
 type Checked = DropdownMenuCheckboxItemProps["checked"]
@@ -51,28 +52,36 @@ function DashboardContent() {
   useEffect(() => {
     const shouldShowForm = searchParams.get('showForm') === 'true';
     setShowForm(shouldShowForm);
-    if (!shouldShowForm) {
-      setEditingBenchmark(null);
-    }
+    // This logic is now handled by the handleAddNew and handleEdit functions
+    // to prevent bugs where editing state is incorrectly cleared.
   }, [searchParams]);
 
   useEffect(() => {
-    try {
-      const storedBenchmarks = localStorage.getItem('benchmarks');
-      if (storedBenchmarks) {
-        setBenchmarks(JSON.parse(storedBenchmarks));
+    // Fetch benchmarks from Firestore when the component mounts
+    async function loadBenchmarks() {
+      setLoading(true);
+      try {
+        const firestoreBenchmarks = await getBenchmarks();
+        setBenchmarks(firestoreBenchmarks);
+      } catch (error) {
+        console.error("Failed to load benchmarks from Firestore", error);
+        toast({
+          variant: "destructive",
+          title: "Error",
+          description: "Could not load benchmarks from the database.",
+        });
       }
-    } catch (error) {
-      console.error("Failed to load benchmarks from local storage", error);
+      setLoading(false);
     }
-    setLoading(false);
+    loadBenchmarks();
   }, []);
   
   
 
   useEffect(() => {
+    // We will replace this with Firestore saving logic in the next step.
     if(!loading) {
-        localStorage.setItem('benchmarks', JSON.stringify(benchmarks));
+        // localStorage.setItem('benchmarks', JSON.stringify(benchmarks));
     }
   }, [benchmarks, loading]);
 
@@ -305,7 +314,7 @@ function DashboardContent() {
                 ))
             ) : (
                 <div className="col-span-full text-center py-12">
-                    <p>No benchmarks found. Try adjusting your filters or adding a new one.</p>
+                    <p>No benchmarks found. Try adding a new one.</p>
                 </div>
             )}
             </div>
