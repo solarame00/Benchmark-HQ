@@ -19,7 +19,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Switch } from '@/components/ui/switch';
 import type { Benchmark, BenchmarkInput } from '@/lib/types';
 import { Loader2 } from 'lucide-react';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { COUNTRIES, CONNECTION_OPTIONS, PAYMENT_STRATEGIES, PAYMENT_METHODS, CURRENCIES } from '@/lib/constants';
 import { RadioGroup, RadioGroupItem } from './ui/radio-group';
@@ -66,59 +66,62 @@ export function BenchmarkForm({ benchmark, onSave, onCancel }: BenchmarkFormProp
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
-    defaultValues: benchmark
-      ? {
-          ...benchmark,
-          score: benchmark.score || undefined,
-          organicTraffic: benchmark.organicTraffic || undefined,
-          tags: benchmark.tags?.join(', ') || '',
-          secondaryMarket: benchmark.secondaryMarket || '',
-          tertiaryMarket: benchmark.tertiaryMarket || '',
-          startTimeline: benchmark.startTimeline || '',
-          paymentStrategy: benchmark.paymentStrategy || '',
-          paymentMethods: benchmark.paymentMethods || [],
-          paymentRedirect: benchmark.paymentRedirect || '',
-          pricing: {
-            currency: benchmark.pricing?.currency || '',
-            oneMonth: benchmark.pricing?.oneMonth || '',
-            threeMonths: benchmark.pricing?.threeMonths || '',
-            sixMonths: benchmark.pricing?.sixMonths || '',
-            twelveMonths: benchmark.pricing?.twelveMonths || '',
-            twoYear: benchmark.pricing?.twoYear || '',
-            lifetime: benchmark.pricing?.lifetime || '',
-          },
-          connections: benchmark.connections || '',
-          notes: benchmark.notes || '',
-        }
-      : {
-          url: '',
-          score: undefined,
-          organicTraffic: undefined,
-          primaryMarket: '',
-          secondaryMarket: '',
-          tertiaryMarket: '',
-          startTimeline: '',
-          paymentStrategy: '',
-          paymentMethods: [],
-          paymentRedirect: '',
-          offerTrial: false,
-          hasBlog: false,
-          hasResellPanel: false,
-          requiresAccount: false,
-          pricing: {
-            currency: '',
-            oneMonth: '',
-            threeMonths: '',
-            sixMonths: '',
-            twelveMonths: '',
-            twoYear: '',
-            lifetime: '',
-          },
-          connections: '',
-          notes: '',
-          tags: '',
-        },
+    defaultValues: {
+      url: '',
+      score: undefined,
+      organicTraffic: undefined,
+      primaryMarket: '',
+      secondaryMarket: '',
+      tertiaryMarket: '',
+      startTimeline: '',
+      paymentStrategy: '',
+      paymentMethods: [],
+      paymentRedirect: '',
+      offerTrial: false,
+      hasBlog: false,
+      hasResellPanel: false,
+      requiresAccount: false,
+      pricing: {
+        currency: '',
+        oneMonth: '',
+        threeMonths: '',
+        sixMonths: '',
+        twelveMonths: '',
+        twoYear: '',
+        lifetime: '',
+      },
+      connections: '',
+      notes: '',
+      tags: '',
+    },
   });
+
+  useEffect(() => {
+    if (benchmark) {
+      form.reset({
+        ...benchmark,
+        tags: benchmark.tags?.join(', ') || '',
+        pricing: {
+          currency: benchmark.pricing?.currency || '',
+          oneMonth: benchmark.pricing?.oneMonth || '',
+          threeMonths: benchmark.pricing?.threeMonths || '',
+          sixMonths: benchmark.pricing?.sixMonths || '',
+          twelveMonths: benchmark.pricing?.twelveMonths || '',
+          twoYear: benchmark.pricing?.twoYear || '',
+          lifetime: benchmark.pricing?.lifetime || '',
+        },
+      });
+    } else {
+        form.reset({
+            url: '', score: undefined, organicTraffic: undefined, primaryMarket: '',
+            secondaryMarket: '', tertiaryMarket: '', startTimeline: '', paymentStrategy: '',
+            paymentMethods: [], paymentRedirect: '', offerTrial: false, hasBlog: false,
+            hasResellPanel: false, requiresAccount: false,
+            pricing: { currency: '', oneMonth: '', threeMonths: '', sixMonths: '', twelveMonths: '', twoYear: '', lifetime: '' },
+            connections: '', notes: '', tags: '',
+        });
+    }
+  }, [benchmark, form]);
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
     setIsSubmitting(true);
@@ -176,7 +179,7 @@ export function BenchmarkForm({ benchmark, onSave, onCancel }: BenchmarkFormProp
             />
             <FormField control={form.control} name="organicTraffic" render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Organic Search Traffic (in K)</FormLabel>
+                  <FormLabel>Traffic</FormLabel>
                   <FormControl><Input type="number" {...field} /></FormControl>
                   <FormMessage />
                 </FormItem>
@@ -188,7 +191,7 @@ export function BenchmarkForm({ benchmark, onSave, onCancel }: BenchmarkFormProp
             <FormField control={form.control} name="primaryMarket" render={({ field }) => (
               <FormItem>
                 <FormLabel>Primary Market</FormLabel>
-                <Select onValueChange={field.onChange} defaultValue={field.value}>
+                <Select onValueChange={field.onChange} value={field.value}>
                   <FormControl>
                     <SelectTrigger><SelectValue placeholder="Select a country" /></SelectTrigger>
                   </FormControl>
@@ -202,7 +205,7 @@ export function BenchmarkForm({ benchmark, onSave, onCancel }: BenchmarkFormProp
             <FormField control={form.control} name="secondaryMarket" render={({ field }) => (
               <FormItem>
                 <FormLabel>Secondary Market</FormLabel>
-                <Select onValueChange={field.onChange} defaultValue={field.value}>
+                <Select onValueChange={field.onChange} value={field.value}>
                   <FormControl>
                     <SelectTrigger><SelectValue placeholder="Optional" /></SelectTrigger>
                   </FormControl>
@@ -216,7 +219,7 @@ export function BenchmarkForm({ benchmark, onSave, onCancel }: BenchmarkFormProp
              <FormField control={form.control} name="tertiaryMarket" render={({ field }) => (
               <FormItem>
                 <FormLabel>Tertiary Market</FormLabel>
-                <Select onValueChange={field.onChange} defaultValue={field.value}>
+                <Select onValueChange={field.onChange} value={field.value}>
                   <FormControl>
                     <SelectTrigger><SelectValue placeholder="Optional" /></SelectTrigger>
                   </FormControl>
@@ -234,7 +237,7 @@ export function BenchmarkForm({ benchmark, onSave, onCancel }: BenchmarkFormProp
              <FormField control={form.control} name="pricing.currency" render={({ field }) => (
                 <FormItem>
                   <FormLabel>Currency</FormLabel>
-                   <Select onValueChange={field.onChange} defaultValue={field.value}>
+                   <Select onValueChange={field.onChange} value={field.value}>
                     <FormControl>
                       <SelectTrigger><SelectValue placeholder="Select currency" /></SelectTrigger>
                     </FormControl>
@@ -387,7 +390,7 @@ export function BenchmarkForm({ benchmark, onSave, onCancel }: BenchmarkFormProp
              <FormField control={form.control} name="connections" render={({ field }) => (
                 <FormItem>
                   <FormLabel>Connections</FormLabel>
-                  <Select onValueChange={field.onChange} defaultValue={field.value}>
+                  <Select onValueChange={field.onChange} value={field.value}>
                     <FormControl>
                       <SelectTrigger><SelectValue placeholder="Select number of connections" /></SelectTrigger>
                     </FormControl>
@@ -432,5 +435,3 @@ export function BenchmarkForm({ benchmark, onSave, onCancel }: BenchmarkFormProp
     </Form>
   );
 }
-
-    
