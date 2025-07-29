@@ -60,15 +60,11 @@ function DashboardContent() {
   
   useEffect(() => {
     const shouldShowForm = searchParams.get('showForm') === 'true';
-      if (shouldShowForm) {
-        setShowForm(true);
-        setEditingBenchmark(null);
+    setShowForm(shouldShowForm);
+    if (shouldShowForm && !editingBenchmark) {
         setActiveBenchmark(null);
-      } else {
-        setShowForm(false);
-        setEditingBenchmark(null);
-      }
-  }, [searchParams]);
+    }
+  }, [searchParams, editingBenchmark]);
 
   useEffect(() => {
     if(!loading) {
@@ -77,6 +73,8 @@ function DashboardContent() {
   }, [benchmarks, loading]);
 
   const handleAddNew = () => {
+    setEditingBenchmark(null);
+    setActiveBenchmark(null);
     const current = new URL(window.location.href);
     current.searchParams.set('showForm', 'true');
     router.push(current.toString(), { scroll: false });
@@ -99,6 +97,7 @@ function DashboardContent() {
   }
   
   const handleCancelForm = () => {
+    setEditingBenchmark(null);
     const current = new URL(window.location.href);
     current.searchParams.delete('showForm');
     router.push(current.toString(), { scroll: false });
@@ -293,8 +292,8 @@ function DashboardContent() {
                     benchmark={b}
                     isActive={activeBenchmark?.id === b.id}
                     onClick={() => handleCardClick(b)}
-                    onEdit={handleEdit}
-                    onDelete={handleDelete}
+                    onEdit={() => handleEdit(b)}
+                    onDelete={() => handleDelete(b.id)}
                 />
                 ))
             ) : (
@@ -349,4 +348,3 @@ export default function DashboardPage() {
         </Suspense>
     )
 }
-
