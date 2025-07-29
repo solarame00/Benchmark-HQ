@@ -17,6 +17,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { DropdownMenu, DropdownMenuCheckboxItem, DropdownMenuContent, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import type { DropdownMenuCheckboxItemProps } from "@radix-ui/react-dropdown-menu"
 import { COUNTRIES } from '@/lib/constants';
+import { MissingApiKeyAlert } from '@/components/missing-api-key-alert';
+
 
 type Checked = DropdownMenuCheckboxItemProps["checked"]
 
@@ -47,6 +49,14 @@ function DashboardContent() {
   const [viewMode, setViewMode] = useState<'cards' | 'table'>('cards');
 
   useEffect(() => {
+    const shouldShowForm = searchParams.get('showForm') === 'true';
+    setShowForm(shouldShowForm);
+    if (!shouldShowForm) {
+      setEditingBenchmark(null);
+    }
+  }, [searchParams]);
+
+  useEffect(() => {
     try {
       const storedBenchmarks = localStorage.getItem('benchmarks');
       if (storedBenchmarks) {
@@ -58,10 +68,7 @@ function DashboardContent() {
     setLoading(false);
   }, []);
   
-  useEffect(() => {
-    const shouldShowForm = searchParams.get('showForm') === 'true';
-    setShowForm(shouldShowForm);
-  }, [searchParams]);
+  
 
   useEffect(() => {
     if(!loading) {
@@ -277,6 +284,8 @@ function DashboardContent() {
                 </div>
             </CardContent>
        </Card>
+      
+      <MissingApiKeyAlert />
 
       {viewMode === 'cards' && (
         <>

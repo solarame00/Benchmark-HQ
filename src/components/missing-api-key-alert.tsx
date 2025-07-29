@@ -8,9 +8,8 @@ export function MissingApiKeyAlert() {
   const [isConfigMissing, setIsConfigMissing] = useState(false);
 
   useEffect(() => {
-    // This component is no longer used for Firestore, but can be repurposed later.
-    // For now, we just ensure it doesn't render.
-    setIsConfigMissing(false);
+    const isMissing = !process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID;
+    setIsConfigMissing(isMissing);
   }, []);
 
   if (!isConfigMissing) {
@@ -20,11 +19,11 @@ export function MissingApiKeyAlert() {
   return (
     <Alert variant="destructive" className="mb-4">
       <AlertTriangle className="h-4 w-4" />
-      <AlertTitle>Configuration Missing</AlertTitle>
+      <AlertTitle>Firebase Configuration Missing</AlertTitle>
       <AlertDescription>
-        Your Firebase API key is missing. Please add your Firebase project configuration to the 
+        Your Firebase project configuration is missing. Please add your Firebase project configuration to the 
         <code className="relative rounded bg-muted px-[0.3rem] py-[0.2rem] font-mono text-sm font-semibold">.env</code> 
-        file to connect to the database.
+        file to connect to the database. Without it, the app will not be able to save or load data.
       </AlertDescription>
     </Alert>
   );
