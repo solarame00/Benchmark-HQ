@@ -8,7 +8,8 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, PieChart, Pie, Cell, LabelList } from 'recharts';
 import { Skeleton } from '@/components/ui/skeleton';
 
-const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884d8', '#82ca9d'];
+const PALETTE = ['#3F51B5', '#009688', '#FFC107', '#FF5722', '#607D8B', '#9C27B0'];
+const PIE_PALETTE = ['#3F51B5', '#009688', '#FFC107', '#FF5722'];
 
 export default function StatsPage() {
   const [benchmarks, setBenchmarks] = useState<Benchmark[]>([]);
@@ -30,7 +31,7 @@ export default function StatsPage() {
     benchmarks.forEach(b => {
       counts[b.primaryMarket] = (counts[b.primaryMarket] || 0) + 1;
     });
-    return Object.entries(counts).map(([name, value]) => ({ name, value }));
+    return Object.entries(counts).map(([name, value]) => ({ name, value })).sort((a, b) => b.value - a.value);
   }, [benchmarks, loading]);
 
   const featureAdoption = useMemo(() => {
@@ -46,47 +47,54 @@ export default function StatsPage() {
   
   const scoreAndTrafficData = useMemo(() => {
     return benchmarks
+      .filter(b => (b.score || 0) > 0 || (b.organicTraffic || 0) > 0)
       .slice()
       .sort((a, b) => (b.score || 0) - (a.score || 0))
       .map(b => ({
         name: new URL(b.url).hostname.replace('www.',''),
         Score: b.score,
-        'Organic Traffic (K)': b.organicTraffic,
+        'Traffic (K)': b.organicTraffic,
       }));
   }, [benchmarks]);
+
+  const paymentStrategyDistribution = useMemo(() => {
+    if (loading) return [];
+    const counts: { [key: string]: number } = {};
+    benchmarks.forEach(b => {
+        if(b.paymentStrategy) {
+            counts[b.paymentStrategy] = (counts[b.paymentStrategy] || 0) + 1;
+        }
+    });
+    return Object.entries(counts).map(([name, value]) => ({ name, value })).sort((a, b) => b.value - a.value);
+  }, [benchmarks, loading]);
+
+  const paymentMethodAdoption = useMemo(() => {
+    if (loading) return [];
+    const counts: { [key: string]: number } = {};
+    benchmarks.forEach(b => {
+        b.paymentMethods?.forEach(method => {
+            counts[method] = (counts[method] || 0) + 1;
+        })
+    });
+    return Object.entries(counts).map(([name, count]) => ({ name, count })).sort((a, b) => b.count - a.count);
+  }, [benchmarks, loading]);
 
 
   const renderContent = () => {
     if (loading) {
       return (
-        <div className="grid gap-8 md:grid-cols-2">
-            <Card>
+        <div className="grid gap-8 md:grid-cols-2 lg:grid-cols-3">
+           {Array.from({ length: 6 }).map((_, i) => (
+             <Card key={i}>
                 <CardHeader>
-                    <Skeleton className="h-6 w-1/2" />
-                    <Skeleton className="h-4 w-1/3" />
+                    <Skeleton className="h-6 w-3/4" />
+                    <Skeleton className="h-4 w-1/2" />
                 </CardHeader>
                 <CardContent>
                     <Skeleton className="h-64 w-full" />
                 </CardContent>
             </Card>
-             <Card>
-                <CardHeader>
-                    <Skeleton className="h-6 w-1/2" />
-                    <Skeleton className="h-4 w-1/3" />
-                </CardHeader>
-                <CardContent className="flex justify-center items-center">
-                    <Skeleton className="h-48 w-48 rounded-full" />
-                </CardContent>
-            </Card>
-             <Card className="md:col-span-2">
-                <CardHeader>
-                    <Skeleton className="h-6 w-1/2" />
-                    <Skeleton className="h-4 w-1/3" />
-                </CardHeader>
-                <CardContent>
-                     <Skeleton className="h-64 w-full" />
-                </CardContent>
-            </Card>
+           ))}
         </div>
       );
     }
@@ -105,8 +113,8 @@ export default function StatsPage() {
     }
 
     return (
-      <div className="grid gap-8 md:grid-cols-2">
-        <Card className="md:col-span-2">
+      <div className="grid gap-8 md:grid-cols-2 lg:grid-cols-3">
+        <Card className="lg:col-span-3">
           <CardHeader>
             <CardTitle>Score vs. Organic Traffic</CardTitle>
             <CardDescription>Comparing competitor scores and their monthly organic traffic.</CardDescription>
@@ -116,12 +124,12 @@ export default function StatsPage() {
               <BarChart data={scoreAndTrafficData} margin={{ top: 5, right: 20, left: 0, bottom: 80 }}>
                 <CartesianGrid strokeDasharray="3 3" />
                 <XAxis dataKey="name" angle={-45} textAnchor="end" interval={0} />
-                <YAxis yAxisId="left" orientation="left" stroke="#3F51B5" />
-                <YAxis yAxisId="right" orientation="right" stroke="#009688" />
+                <YAxis yAxisId="left" orientation="left" stroke={PALETTE[0]} />
+                <YAxis yAxisId="right" orientation="right" stroke={PALETTE[1]} />
                 <Tooltip />
                 <Legend verticalAlign="top" />
-                <Bar yAxisId="left" dataKey="Score" fill="#3F51B5" />
-                <Bar yAxisId="right" dataKey="Organic Traffic (K)" fill="#009688" />
+                <Bar yAxisId="left" dataKey="Score" fill={PALETTE[0]} />
+                <Bar yAxisId="right" dataKey="Traffic (K)" fill={PALETTE[1]} />
               </BarChart>
             </ResponsiveContainer>
           </CardContent>
@@ -129,17 +137,36 @@ export default function StatsPage() {
 
         <Card>
           <CardHeader>
-            <CardTitle>Primary Market Distribution</CardTitle>
-             <CardDescription>Breakdown of competitors by their main market.</CardDescription>
+            <CardTitle>Primary Market</CardTitle>
+             <CardDescription>Breakdown of competitors by main market.</CardDescription>
           </CardHeader>
           <CardContent>
             <ResponsiveContainer width="100%" height={300}>
               <PieChart>
-                <Pie data={marketDistribution} dataKey="value" nameKey="name" cx="50%" cy="50%" outerRadius={100} fill="#8884d8" label>
+                <Pie data={marketDistribution} dataKey="value" nameKey="name" cx="50%" cy="50%" outerRadius={100} fill={PALETTE[0]} label>
                   {marketDistribution.map((entry, index) => (
-                    <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                    <Cell key={`cell-${index}`} fill={PIE_PALETTE[index % PIE_PALETTE.length]} />
                   ))}
-                   <LabelList dataKey="name" position="outside" offset={15} stroke="black" fontSize={12} />
+                </Pie>
+                <Tooltip />
+                 <Legend />
+              </PieChart>
+            </ResponsiveContainer>
+          </CardContent>
+        </Card>
+
+         <Card>
+          <CardHeader>
+            <CardTitle>Payment Strategy</CardTitle>
+             <CardDescription>Distribution of payment strategies used.</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <ResponsiveContainer width="100%" height={300}>
+              <PieChart>
+                <Pie data={paymentStrategyDistribution} dataKey="value" nameKey="name" cx="50%" cy="50%" outerRadius={100} fill={PALETTE[0]} label>
+                  {paymentStrategyDistribution.map((entry, index) => (
+                    <Cell key={`cell-${index}`} fill={PIE_PALETTE[index % PIE_PALETTE.length]} />
+                  ))}
                 </Pie>
                 <Tooltip />
                  <Legend />
@@ -160,8 +187,26 @@ export default function StatsPage() {
                     <XAxis type="number" />
                     <YAxis type="category" dataKey="name" width={80}/>
                     <Tooltip />
-                    <Legend />
-                    <Bar dataKey="count" fill="#FFBB28" name="Number of Sites" />
+                    <Bar dataKey="count" fill={PALETTE[2]} name="# of Sites" />
+                </BarChart>
+             </ResponsiveContainer>
+          </CardContent>
+        </Card>
+
+         <Card className="lg:col-span-3">
+          <CardHeader>
+            <CardTitle>Payment Method Adoption</CardTitle>
+            <CardDescription>Popularity of different payment methods offered.</CardDescription>
+          </CardHeader>
+          <CardContent>
+             <ResponsiveContainer width="100%" height={300}>
+                <BarChart data={paymentMethodAdoption} margin={{ top: 5, right: 20, left: 20, bottom: 5 }}>
+                    <CartesianGrid strokeDasharray="3 3" />
+                    <XAxis dataKey="name" />
+                    <YAxis />
+                    <Tooltip />
+                    <Legend verticalAlign="top" />
+                    <Bar dataKey="count" fill={PALETTE[3]} name="# of Sites" />
                 </BarChart>
              </ResponsiveContainer>
           </CardContent>
