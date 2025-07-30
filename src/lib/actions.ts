@@ -8,8 +8,6 @@ import type { Benchmark, BenchmarkInput } from './types';
 // This function fetches all benchmarks from the 'benchmarks' collection in Firestore.
 export async function getBenchmarks(): Promise<Benchmark[]> {
   try {
-    // Ensure you have a 'benchmarks' collection in your Firestore database.
-    // If not, this will return an empty array, which is expected.
     const snapshot = await getDocs(collection(db, 'benchmarks'));
     if (snapshot.empty) {
       return [];
@@ -18,18 +16,18 @@ export async function getBenchmarks(): Promise<Benchmark[]> {
     const benchmarks: Benchmark[] = [];
     snapshot.forEach(doc => {
       const data = doc.data();
+      // Firestore Timestamps need to be converted to ISO strings for client-side compatibility
+      const lastUpdatedTimestamp = data.lastUpdated as Timestamp;
       benchmarks.push({
         id: doc.id,
         ...data,
-        // Firestore Timestamps need to be converted to ISO strings for the client
-        lastUpdated: (data.lastUpdated as Timestamp).toDate().toISOString(),
+        lastUpdated: lastUpdatedTimestamp ? lastUpdatedTimestamp.toDate().toISOString() : new Date().toISOString(),
       } as Benchmark);
     });
 
     return benchmarks;
   } catch (error) {
     console.error("Error fetching benchmarks: ", error);
-    // In case of an error, return an empty array to prevent the app from crashing.
     return [];
   }
 }
@@ -39,7 +37,6 @@ export async function addBenchmark(benchmarkData: BenchmarkInput) {
   try {
     const dataWithTimestamp = {
       ...benchmarkData,
-      // Ensure all fields have a default value if they are not provided
       url: benchmarkData.url || '',
       score: benchmarkData.score || 0,
       organicTraffic: benchmarkData.organicTraffic || 0,
@@ -71,12 +68,12 @@ export async function addBenchmark(benchmarkData: BenchmarkInput) {
 export async function updateBenchmark(id: string, benchmarkData: BenchmarkInput) {
   try {
     const docRef = doc(db, 'benchmarks', id);
-    const dataWithTimestamp = {
-      ...benchmarkData,
-      lastUpdated: Timestamp.now(),
+    // Create a new object for update, ensuring all fields are defined
+    const dataToUpdate = {
+        ...benchmarkData,
+        lastUpdated: Timestamp.now()
     };
-    // updateDoc will only update the fields you provide, which is safe.
-    await updateDoc(docRef, dataWithTimestamp);
+    await updateDoc(docRef, dataToUpdate);
   } catch (error) {
     console.error("Error updating benchmark: ", error);
     throw new Error("Could not update benchmark.");
