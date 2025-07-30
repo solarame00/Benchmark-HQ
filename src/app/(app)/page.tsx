@@ -95,15 +95,22 @@ function DashboardContent() {
   }
 
   const handleDelete = async (id: string) => {
+    const originalBenchmarks = [...benchmarks];
+    
+    // Optimistically update UI
+    setBenchmarks(benchmarks.filter(b => b.id !== id));
+    if (activeBenchmark?.id === id) {
+        setActiveBenchmark(null);
+    }
+
     try {
       await deleteBenchmark(id);
-      if (activeBenchmark?.id === id) {
-          setActiveBenchmark(null);
-      }
       toast({ title: 'Success', description: 'Benchmark deleted successfully.' });
-      await loadBenchmarks(); // Refresh data from Firestore
+      // No need to call loadBenchmarks() here as UI is already updated
     } catch (error) {
        console.error("Failed to delete benchmark:", error);
+       // Revert UI on error
+       setBenchmarks(originalBenchmarks);
        toast({
          variant: "destructive",
          title: "Error",
@@ -122,18 +129,16 @@ function DashboardContent() {
 
   const handleSave = async (data: BenchmarkInput, id?: string) => {
     try {
-      let message = '';
       if (id) {
         await updateBenchmark(id, data);
-        message = 'Benchmark updated successfully.';
+        toast({ title: 'Success', description: 'Benchmark updated successfully.' });
       } else {
         await addBenchmark(data);
-        message = 'Benchmark added successfully.';
+        toast({ title: 'Success', description: 'Benchmark added successfully.' });
       }
       
       handleCancelForm();
-      await loadBenchmarks(); // Refresh data from Firestore
-      toast({ title: 'Success', description: message });
+      await loadBenchmarks(); // Explicitly reload data from Firestore
 
     } catch (error) {
        console.error("Failed to save benchmark:", error);
@@ -178,7 +183,10 @@ function DashboardContent() {
             case 'traffic-asc':
                 return (a.organicTraffic || 0) - (b.organicTraffic || 0);
             case 'lastUpdated-desc':
-                return new Date(b.lastUpdated).getTime() - new Date(a.lastUpdated).getTime();
+                // Ensure dates are valid before comparing
+                const dateA = a.lastUpdated ? new Date(a.lastUpdated).getTime() : 0;
+                const dateB = b.lastUpdated ? new Date(b.lastUpdated).getTime() : 0;
+                return dateB - dateA;
             default:
                 return 0;
         }
