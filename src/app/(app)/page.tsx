@@ -16,7 +16,7 @@ import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { DropdownMenu, DropdownMenuCheckboxItem, DropdownMenuContent, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import type { DropdownMenuCheckboxItemProps } from "@radix-ui/react-dropdown-menu"
-import { COUNTRIES } from '@/lib/constants';
+import { COUNTRIES, PAYMENT_STRATEGIES, PAYMENT_METHODS, CONNECTION_OPTIONS } from '@/lib/constants';
 import { MissingApiKeyAlert } from '@/components/missing-api-key-alert';
 import { getBenchmarks, addBenchmark, updateBenchmark, deleteBenchmark } from '@/lib/actions';
 
@@ -35,7 +35,10 @@ function DashboardContent() {
 
   const [filters, setFilters] = useState({
     primaryMarket: 'all',
+    paymentStrategy: 'all',
+    connections: 'all',
   });
+  const [paymentMethodsFilter, setPaymentMethodsFilter] = useState<string[]>([]);
   const [booleanFilters, setBooleanFilters] = useState<{ [key: string]: Checked }>({
     offerTrial: false,
     hasBlog: false,
@@ -146,6 +149,12 @@ function DashboardContent() {
     setBooleanFilters(prev => ({ ...prev, [key]: checked === 'indeterminate' ? false : checked }));
   };
 
+  const handlePaymentMethodFilterChange = (method: string) => (checked: boolean) => {
+    setPaymentMethodsFilter(prev => 
+      checked ? [...prev, method] : prev.filter(m => m !== method)
+    );
+  };
+
 
   const filteredAndSortedBenchmarks = useMemo(() => {
     let filtered = benchmarks.filter((b) => {
@@ -161,7 +170,11 @@ function DashboardContent() {
       const hasResellPanelMatch = !booleanFilters.hasResellPanel || b.hasResellPanel;
       const requiresAccountMatch = !booleanFilters.requiresAccount || b.requiresAccount;
 
-      return searchMatch && marketMatch && offerTrialMatch && hasBlogMatch && hasResellPanelMatch && requiresAccountMatch;
+      const paymentStrategyMatch = filters.paymentStrategy === 'all' || b.paymentStrategy === filters.paymentStrategy;
+      const connectionsMatch = filters.connections === 'all' || b.connections === filters.connections;
+      const paymentMethodsMatch = paymentMethodsFilter.length === 0 || paymentMethodsFilter.every(method => b.paymentMethods?.includes(method));
+
+      return searchMatch && marketMatch && offerTrialMatch && hasBlogMatch && hasResellPanelMatch && requiresAccountMatch && paymentStrategyMatch && connectionsMatch && paymentMethodsMatch;
     });
 
     filtered.sort((a, b) => {
@@ -184,7 +197,7 @@ function DashboardContent() {
     });
 
     return filtered;
-  }, [benchmarks, searchTerm, sortBy, filters, booleanFilters]);
+  }, [benchmarks, searchTerm, sortBy, filters, booleanFilters, paymentMethodsFilter]);
 
   const handleCardClick = (benchmark: Benchmark) => {
     if (activeBenchmark?.id === benchmark.id) {
@@ -244,7 +257,7 @@ function DashboardContent() {
        <Card>
             <CardContent className="p-4 space-y-4">
                  <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-4">
-                    <div className="relative flex-grow lg:col-span-1">
+                    <div className="relative flex-grow lg:col-span-2">
                         <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                         <Input
                         type="search"
@@ -258,7 +271,7 @@ function DashboardContent() {
                         <SelectTrigger className="w-full">
                             <SelectValue placeholder="Filter by primary market" />
                         </SelectTrigger>
-                        <SelectContent position="item-aligned">
+                        <SelectContent>
                             <SelectItem value="all">All Primary Markets</SelectItem>
                             {COUNTRIES.map(country => (
                               <SelectItem key={country} value={country}>{country}</SelectItem>
@@ -277,10 +290,11 @@ function DashboardContent() {
                             <SelectItem value="lastUpdated-desc">Last Updated</SelectItem>
                         </SelectContent>
                     </Select>
-
-                     <DropdownMenu>
+                </div>
+                <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-4">
+                    <DropdownMenu>
                         <DropdownMenuTrigger asChild>
-                            <Button variant="outline" className="w-full">
+                            <Button variant="outline" className="w-full justify-between">
                                 Feature Filters <ChevronDown className="ml-2 h-4 w-4" />
                             </Button>
                         </DropdownMenuTrigger>
@@ -301,6 +315,44 @@ function DashboardContent() {
                             </DropdownMenuCheckboxItem>
                         </DropdownMenuContent>
                     </DropdownMenu>
+                    <Select onValueChange={(value) => setFilters(f => ({...f, paymentStrategy: value}))} defaultValue={filters.paymentStrategy}>
+                        <SelectTrigger className="w-full">
+                            <SelectValue placeholder="Filter by payment strategy" />
+                        </SelectTrigger>
+                        <SelectContent>
+                            <SelectItem value="all">All Payment Strategies</SelectItem>
+                            {PAYMENT_STRATEGIES.map(strategy => (
+                              <SelectItem key={strategy} value={strategy}>{strategy}</SelectItem>
+                            ))}
+                        </SelectContent>
+                    </Select>
+                     <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                            <Button variant="outline" className="w-full justify-between">
+                                Payment Methods <ChevronDown className="ml-2 h-4 w-4" />
+                            </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent className="w-56" onSelect={(e) => e.preventDefault()}>
+                            <DropdownMenuLabel>Filter by Payment Methods</DropdownMenuLabel>
+                            <DropdownMenuSeparator />
+                            {PAYMENT_METHODS.map(method => (
+                                <DropdownMenuCheckboxItem key={method} checked={paymentMethodsFilter.includes(method)} onCheckedChange={handlePaymentMethodFilterChange(method)}>
+                                    {method}
+                                </DropdownMenuCheckboxItem>
+                            ))}
+                        </DropdownMenuContent>
+                    </DropdownMenu>
+                    <Select onValueChange={(value) => setFilters(f => ({...f, connections: value}))} defaultValue={filters.connections}>
+                        <SelectTrigger className="w-full">
+                            <SelectValue placeholder="Filter by connections" />
+                        </SelectTrigger>
+                        <SelectContent>
+                            <SelectItem value="all">All Connections</SelectItem>
+                            {CONNECTION_OPTIONS.map(option => (
+                              <SelectItem key={option} value={option}>{option}</SelectItem>
+                            ))}
+                        </SelectContent>
+                    </Select>
                 </div>
             </CardContent>
        </Card>
@@ -316,13 +368,18 @@ function DashboardContent() {
       {!loading && filteredAndSortedBenchmarks.length === 0 && (
          <Card className="col-span-full text-center py-12">
             <CardHeader>
-                <CardTitle>No Benchmarks Yet</CardTitle>
-                <CardDescription>Get started by adding your first competitor benchmark.</CardDescription>
+                <CardTitle>No Benchmarks Found</CardTitle>
+                <CardDescription>Your search or filter criteria did not match any benchmarks. Try adjusting your filters.</CardDescription>
             </CardHeader>
             <CardContent>
-                <Button onClick={handleAddNew}>
-                    <PlusCircle className="mr-2 h-4 w-4" />
-                    Add New Benchmark
+                <Button onClick={() => {
+                    setSearchTerm('');
+                    setFilters({ primaryMarket: 'all', paymentStrategy: 'all', connections: 'all' });
+                    setBooleanFilters({ offerTrial: false, hasBlog: false, hasResellPanel: false, requiresAccount: false });
+                    setPaymentMethodsFilter([]);
+                }}>
+                    <X className="mr-2 h-4 w-4" />
+                    Clear All Filters
                 </Button>
             </CardContent>
          </Card>
@@ -388,5 +445,7 @@ export default function DashboardPage() {
         </Suspense>
     )
 }
+
+    
 
     
