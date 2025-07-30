@@ -25,6 +25,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import {
   CheckCircle,
+  Copy,
   Edit,
   Globe,
   MoreVertical,
@@ -44,6 +45,7 @@ type BenchmarkTableProps = {
   benchmarks: Benchmark[];
   loading?: boolean;
   onEdit: (benchmark: Benchmark) => void;
+  onClone: (benchmark: Benchmark) => void;
   onDelete: (id: string) => void;
   isDetailsView?: boolean;
 };
@@ -57,7 +59,7 @@ const pricingLabels: Record<keyof Omit<Pricing, 'currency'>, string> = {
     lifetime: 'Lifetime',
 };
 
-export function BenchmarkTable({ benchmarks, loading, onEdit, onDelete, isDetailsView = false }: BenchmarkTableProps) {
+export function BenchmarkTable({ benchmarks, loading, onEdit, onClone, onDelete, isDetailsView = false }: BenchmarkTableProps) {
   
   const formatDate = (dateString: string | Date) => {
     try {
@@ -150,6 +152,9 @@ export function BenchmarkTable({ benchmarks, loading, onEdit, onDelete, isDetail
                     <div className="flex gap-2">
                          <Button variant="outline" size="sm" onClick={() => onEdit(benchmark)}>
                             <Edit className="mr-2 h-4 w-4" /> Edit
+                        </Button>
+                         <Button variant="outline" size="sm" onClick={() => onClone(benchmark)}>
+                            <Copy className="mr-2 h-4 w-4" /> Clone
                         </Button>
                         <AlertDialog>
                             <AlertDialogTrigger asChild>
@@ -245,6 +250,10 @@ export function BenchmarkTable({ benchmarks, loading, onEdit, onDelete, isDetail
                         <DropdownMenuItem onClick={() => onEdit(b)}>
                           <Edit className="mr-2 h-4 w-4" />
                           Edit
+                        </DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => onClone(b)}>
+                          <Copy className="mr-2 h-4 w-4" />
+                          Clone
                         </DropdownMenuItem>
                         <AlertDialogTrigger asChild>
                           <DropdownMenuItem className="text-red-500 focus:text-red-500">

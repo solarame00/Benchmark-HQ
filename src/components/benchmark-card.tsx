@@ -7,7 +7,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
-import { CheckCircle, MoreVertical, Globe, Edit, Trash2, XCircle } from 'lucide-react';
+import { CheckCircle, MoreVertical, Globe, Edit, Trash2, XCircle, Copy } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 type BenchmarkCardProps = {
@@ -15,10 +15,11 @@ type BenchmarkCardProps = {
     isActive: boolean;
     onClick: () => void;
     onEdit: (benchmark: Benchmark) => void;
+    onClone: (benchmark: Benchmark) => void;
     onDelete: (id: string) => void;
 };
 
-export function BenchmarkCard({ benchmark, isActive, onClick, onEdit, onDelete }: BenchmarkCardProps) {
+export function BenchmarkCard({ benchmark, isActive, onClick, onEdit, onClone, onDelete }: BenchmarkCardProps) {
     
     return (
         <AlertDialog>
@@ -43,6 +44,9 @@ export function BenchmarkCard({ benchmark, isActive, onClick, onEdit, onDelete }
                             <DropdownMenuContent align="end" onClick={(e) => e.stopPropagation()}>
                                 <DropdownMenuItem onClick={() => onEdit(benchmark)}>
                                     <Edit className="mr-2 h-4 w-4" /> Edit
+                                </DropdownMenuItem>
+                                <DropdownMenuItem onClick={() => onClone(benchmark)}>
+                                    <Copy className="mr-2 h-4 w-4" /> Clone
                                 </DropdownMenuItem>
                                 <AlertDialogTrigger asChild>
                                     <DropdownMenuItem className="text-red-500 focus:text-red-500">

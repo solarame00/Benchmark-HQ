@@ -101,6 +101,16 @@ function DashboardContent() {
     router.push(current.toString(), { scroll: false });
   }
 
+  const handleClone = (benchmark: Benchmark) => {
+    const clonedBenchmark = { ...benchmark, id: '', url: '' };
+    setEditingBenchmark(clonedBenchmark as Benchmark);
+    setActiveBenchmark(null);
+    const current = new URL(window.location.href);
+    current.searchParams.set('showForm', 'true');
+    router.push(current.toString(), { scroll: false });
+  };
+
+
   const handleDelete = async (id: string) => {
     try {
       await deleteBenchmark(id);
@@ -217,7 +227,7 @@ function DashboardContent() {
         <div className="mx-auto grid max-w-4xl flex-1 auto-rows-max gap-4">
             <Card>
                 <CardHeader>
-                <CardTitle>{editingBenchmark ? 'Edit Benchmark' : 'Add New Benchmark'}</CardTitle>
+                <CardTitle>{editingBenchmark?.id ? 'Edit Benchmark' : 'Add New Benchmark'}</CardTitle>
                 <CardDescription>
                     Fill in the details of the competitor website. All fields are optional, except Primary Market.
                 </CardDescription>
@@ -395,6 +405,7 @@ function DashboardContent() {
                     isActive={activeBenchmark?.id === b.id}
                     onClick={() => handleCardClick(b)}
                     onEdit={() => handleEdit(b)}
+                    onClone={() => handleClone(b)}
                     onDelete={() => handleDelete(b.id)}
                 />
             ))}
@@ -411,6 +422,7 @@ function DashboardContent() {
                 <BenchmarkTable
                     benchmarks={[activeBenchmark]}
                     onEdit={handleEdit}
+                    onClone={handleClone}
                     onDelete={handleDelete}
                     isDetailsView={true}
                 />
@@ -423,6 +435,7 @@ function DashboardContent() {
             benchmarks={filteredAndSortedBenchmarks}
             loading={loading}
             onEdit={handleEdit}
+            onClone={handleClone}
             onDelete={handleDelete}
         />
       )}
@@ -437,5 +450,3 @@ export default function DashboardPage() {
         </Suspense>
     )
 }
-
-    
