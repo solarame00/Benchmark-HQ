@@ -21,6 +21,18 @@ type BenchmarkCardProps = {
 
 export function BenchmarkCard({ benchmark, isActive, onClick, onEdit, onClone, onDelete }: BenchmarkCardProps) {
     
+    const getHostname = (url: string) => {
+        if (!url || !url.startsWith('http')) {
+            return url || 'No URL';
+        }
+        try {
+            return new URL(url).hostname.replace('www.', '');
+        } catch (error) {
+            console.error('Invalid URL:', url, error);
+            return url;
+        }
+    };
+
     return (
         <AlertDialog>
             <Card 
@@ -32,7 +44,7 @@ export function BenchmarkCard({ benchmark, isActive, onClick, onEdit, onClone, o
                         <CardTitle className="text-lg leading-tight truncate flex-grow">
                              <a href={benchmark.url} target="_blank" rel="noopener noreferrer" className="hover:underline flex items-center gap-2" onClick={(e) => e.stopPropagation()}>
                                 <Globe className="h-4 w-4 text-muted-foreground flex-shrink-0" />
-                                <span className="truncate">{benchmark.url ? new URL(benchmark.url).hostname.replace('www.', '') : 'No URL'}</span>
+                                <span className="truncate">{getHostname(benchmark.url)}</span>
                             </a>
                         </CardTitle>
                         <DropdownMenu>
@@ -87,7 +99,7 @@ export function BenchmarkCard({ benchmark, isActive, onClick, onEdit, onClone, o
                 <CardFooter>
                      <div className="flex flex-wrap gap-1">
                         {benchmark.tags?.slice(0, 3).map((tag) => <Badge key={tag} variant="outline">{tag}</Badge>)}
-                        {benchmark.tags.length > 3 && <Badge variant="outline">+{benchmark.tags.length - 3}</Badge>}
+                        {benchmark.tags && benchmark.tags.length > 3 && <Badge variant="outline">+{benchmark.tags.length - 3}</Badge>}
                      </div>
                 </CardFooter>
             </Card>
