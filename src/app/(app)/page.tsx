@@ -15,6 +15,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { DropdownMenu, DropdownMenuCheckboxItem, DropdownMenuContent, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription, SheetClose } from '@/components/ui/sheet';
 import type { DropdownMenuCheckboxItemProps } from "@radix-ui/react-dropdown-menu"
 import { COUNTRIES, PAYMENT_STRATEGIES, PAYMENT_METHODS, CONNECTION_OPTIONS } from '@/lib/constants';
 import { MissingApiKeyAlert } from '@/components/missing-api-key-alert';
@@ -386,44 +387,35 @@ function DashboardContent() {
       )}
 
       {!loading && filteredAndSortedBenchmarks.length > 0 && viewMode === 'cards' && (
-        <>
-            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-                {filteredAndSortedBenchmarks.map((b) => (
-                    <BenchmarkCard
-                        key={b.id}
-                        benchmark={b}
-                        isActive={activeBenchmark?.id === b.id}
-                        onClick={() => handleCardClick(b)}
-                        onEdit={() => handleEdit(b)}
-                        onDelete={() => handleDelete(b.id)}
-                    />
-                ))}
-            </div>
-            
-            {activeBenchmark && (
-                <Card>
-                    <CardHeader>
-                        <div className="flex justify-between items-start">
-                             <div>
-                                <CardTitle>Full Details</CardTitle>
-                                <CardDescription>{activeBenchmark.url}</CardDescription>
-                             </div>
-                            <Button variant="ghost" size="icon" onClick={() => setActiveBenchmark(null)}>
-                                <X className="h-4 w-4" />
-                            </Button>
-                        </div>
-                    </CardHeader>
-                    <CardContent>
-                        <BenchmarkTable
-                            benchmarks={[activeBenchmark]}
-                            onEdit={handleEdit}
-                            onDelete={handleDelete}
-                            isDetailsView={true}
-                        />
-                    </CardContent>
-                </Card>
-            )}
-        </>
+        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+            {filteredAndSortedBenchmarks.map((b) => (
+                <BenchmarkCard
+                    key={b.id}
+                    benchmark={b}
+                    isActive={activeBenchmark?.id === b.id}
+                    onClick={() => handleCardClick(b)}
+                    onEdit={() => handleEdit(b)}
+                    onDelete={() => handleDelete(b.id)}
+                />
+            ))}
+        </div>
+      )}
+
+      {activeBenchmark && (
+        <Sheet open={!!activeBenchmark} onOpenChange={(isOpen) => !isOpen && setActiveBenchmark(null)}>
+            <SheetContent className="w-full sm:max-w-xl md:max-w-2xl overflow-y-auto">
+                <SheetHeader className="mb-6 text-left">
+                    <SheetTitle>Benchmark Details</SheetTitle>
+                    <SheetDescription>{activeBenchmark.url}</SheetDescription>
+                </SheetHeader>
+                <BenchmarkTable
+                    benchmarks={[activeBenchmark]}
+                    onEdit={handleEdit}
+                    onDelete={handleDelete}
+                    isDetailsView={true}
+                />
+            </SheetContent>
+        </Sheet>
       )}
 
       {!loading && filteredAndSortedBenchmarks.length > 0 && viewMode === 'table' && (
@@ -445,7 +437,5 @@ export default function DashboardPage() {
         </Suspense>
     )
 }
-
-    
 
     
