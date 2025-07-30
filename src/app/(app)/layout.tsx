@@ -1,28 +1,17 @@
 
+
 'use client';
 
 import { SidebarProvider, Sidebar, SidebarTrigger, SidebarHeader, SidebarContent, SidebarMenu, SidebarMenuItem, SidebarMenuButton, SidebarInset } from '@/components/ui/sidebar';
 import Link from 'next/link';
-import { Home, PlusSquare } from 'lucide-react';
+import { Home, PlusSquare, BarChart2 } from 'lucide-react';
 import { AppLogo } from '@/components/icons';
-import { usePathname, useRouter, useSearchParams } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
 
 
 export default function AppLayout({ children }: { children: React.ReactNode }) {
   const router = useRouter();
-
-  const handleAllBenchmarksClick = (e: React.MouseEvent<HTMLAnchorElement>) => {
-    e.preventDefault();
-    const current = new URL(window.location.href);
-    current.searchParams.delete('showForm');
-    router.push(current.pathname, { scroll: false });
-    // We also need to force a re-render or state update on the page
-    // The most reliable way is to ensure the page component's useEffect logic handles this.
-    // The change in URL should be sufficient, but we make it explicit here.
-    window.dispatchEvent(new PopStateEvent('popstate'));
-    router.push('/');
-  };
-
+  const pathname = usePathname();
 
   return (
     <SidebarProvider>
@@ -36,18 +25,26 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
             <SidebarContent>
                 <SidebarMenu>
                     <SidebarMenuItem>
-                        <SidebarMenuButton asChild tooltip="All Benchmarks">
-                             <Link href="/" onClick={handleAllBenchmarksClick}>
+                        <SidebarMenuButton asChild tooltip="All Benchmarks" isActive={pathname === '/'}>
+                             <Link href="/">
                                 <Home />
                                 <span>All Benchmarks</span>
                             </Link>
                         </SidebarMenuButton>
                     </SidebarMenuItem>
                     <SidebarMenuItem>
-                        <SidebarMenuButton asChild tooltip="Add New">
+                        <SidebarMenuButton asChild tooltip="Add New" isActive={pathname === '/add'}>
                             <Link href="/?showForm=true" scroll={false}>
                                 <PlusSquare />
                                 <span>Add New</span>
+                            </Link>
+                        </SidebarMenuButton>
+                    </SidebarMenuItem>
+                     <SidebarMenuItem>
+                        <SidebarMenuButton asChild tooltip="Stats" isActive={pathname === '/stats'}>
+                            <Link href="/stats">
+                                <BarChart2 />
+                                <span>Stats</span>
                             </Link>
                         </SidebarMenuButton>
                     </SidebarMenuItem>
