@@ -1,7 +1,7 @@
 
 'use client';
 
-import { useState, useEffect, useMemo, Suspense, startTransition } from 'react';
+import { useState, useEffect, useMemo, Suspense } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import type { Benchmark, BenchmarkInput } from '@/lib/types';
 import { BenchmarkTable } from '@/components/benchmark-table';
@@ -45,28 +45,22 @@ function DashboardContent() {
 
   const [sortBy, setSortBy] = useState< 'score-desc' | 'score-asc' | 'lastUpdated-desc' | 'traffic-desc' | 'traffic-asc'>('score-desc');
   
-  const [showForm, setShowForm] = useState(false);
   const [editingBenchmark, setEditingBenchmark] = useState<Benchmark | null>(null);
   const [viewMode, setViewMode] = useState<'cards' | 'table'>('cards');
 
   const showFormParam = searchParams.get('showForm') === 'true';
 
   useEffect(() => {
-    // This effect runs when the component mounts
     loadBenchmarks();
   }, []);
   
   useEffect(() => {
-    // This effect handles showing/hiding the form based on the URL search param
-    const wasShowingForm = showForm;
-    setShowForm(showFormParam);
-    
-    // If we were showing the form and now we are not, it means we've returned
-    // to the list view, so we should reload the data.
-    if (wasShowingForm && !showFormParam) {
-      loadBenchmarks();
+    const isFormVisible = searchParams.get('showForm') === 'true';
+    if (!isFormVisible) {
+        setEditingBenchmark(null);
+        loadBenchmarks();
     }
-  }, [showFormParam]);
+  }, [searchParams]);
 
 
   const loadBenchmarks = async () => {
@@ -110,7 +104,7 @@ function DashboardContent() {
       if (activeBenchmark?.id === id) {
         setActiveBenchmark(null);
       }
-      loadBenchmarks(); // Reload data after successful deletion
+      loadBenchmarks();
     } catch (error) {
        console.error("Failed to delete benchmark:", error);
        toast({
@@ -122,7 +116,6 @@ function DashboardContent() {
   }
   
   const handleCancelForm = () => {
-    setEditingBenchmark(null);
     const current = new URL(window.location.href);
     current.searchParams.delete('showForm');
     router.push(current.toString(), { scroll: false });
@@ -182,7 +175,6 @@ function DashboardContent() {
             case 'traffic-asc':
                 return (a.organicTraffic || 0) - (b.organicTraffic || 0);
             case 'lastUpdated-desc':
-                // Ensure dates are valid before comparing
                 const dateA = a.lastUpdated ? new Date(a.lastUpdated).getTime() : 0;
                 const dateB = b.lastUpdated ? new Date(b.lastUpdated).getTime() : 0;
                 return dateB - dateA;
@@ -206,7 +198,7 @@ function DashboardContent() {
     setSortBy(value as any);
   }
 
-  if (showForm) {
+  if (showFormParam) {
       return (
         <div className="mx-auto grid max-w-4xl flex-1 auto-rows-max gap-4">
             <Card>
@@ -315,27 +307,40 @@ function DashboardContent() {
       
       <MissingApiKeyAlert />
 
-      {viewMode === 'cards' && (
+      {loading && (
+        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+          {Array.from({ length: 8 }).map((_, i) => <Card key={i} className="h-48 animate-pulse bg-muted/50" />)}
+        </div>
+      )}
+
+      {!loading && filteredAndSortedBenchmarks.length === 0 && (
+         <Card className="col-span-full text-center py-12">
+            <CardHeader>
+                <CardTitle>No Benchmarks Yet</CardTitle>
+                <CardDescription>Get started by adding your first competitor benchmark.</CardDescription>
+            </CardHeader>
+            <CardContent>
+                <Button onClick={handleAddNew}>
+                    <PlusCircle className="mr-2 h-4 w-4" />
+                    Add New Benchmark
+                </Button>
+            </CardContent>
+         </Card>
+      )}
+
+      {!loading && filteredAndSortedBenchmarks.length > 0 && viewMode === 'cards' && (
         <>
             <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-            {loading ? (
-                Array.from({ length: 8 }).map((_, i) => <Card key={i} className="h-48 animate-pulse bg-muted/50" />)
-            ) : filteredAndSortedBenchmarks.length > 0 ? (
-                filteredAndSortedBenchmarks.map((b) => (
-                <BenchmarkCard
-                    key={b.id}
-                    benchmark={b}
-                    isActive={activeBenchmark?.id === b.id}
-                    onClick={() => handleCardClick(b)}
-                    onEdit={() => handleEdit(b)}
-                    onDelete={() => handleDelete(b.id)}
-                />
-                ))
-            ) : (
-                <div className="col-span-full text-center py-12">
-                    <p>No benchmarks found. Try adding a new one.</p>
-                </div>
-            )}
+                {filteredAndSortedBenchmarks.map((b) => (
+                    <BenchmarkCard
+                        key={b.id}
+                        benchmark={b}
+                        isActive={activeBenchmark?.id === b.id}
+                        onClick={() => handleCardClick(b)}
+                        onEdit={() => handleEdit(b)}
+                        onDelete={() => handleDelete(b.id)}
+                    />
+                ))}
             </div>
             
             {activeBenchmark && (
@@ -364,7 +369,7 @@ function DashboardContent() {
         </>
       )}
 
-      {viewMode === 'table' && (
+      {!loading && filteredAndSortedBenchmarks.length > 0 && viewMode === 'table' && (
          <BenchmarkTable
             benchmarks={filteredAndSortedBenchmarks}
             loading={loading}
@@ -383,3 +388,5 @@ export default function DashboardPage() {
         </Suspense>
     )
 }
+
+    
