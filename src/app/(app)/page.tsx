@@ -52,16 +52,28 @@ function DashboardContent() {
   const showFormParam = searchParams.get('showForm') === 'true';
 
   useEffect(() => {
+    // This effect runs when the component mounts
+    loadBenchmarks();
+  }, []);
+  
+  useEffect(() => {
+    // This effect handles showing/hiding the form based on the URL search param
+    const wasShowingForm = showForm;
     setShowForm(showFormParam);
+    
+    // If we were showing the form and now we are not, it means we've returned
+    // to the list view, so we should reload the data.
+    if (wasShowingForm && !showFormParam) {
+      loadBenchmarks();
+    }
   }, [showFormParam]);
+
 
   const loadBenchmarks = async () => {
     setLoading(true);
     try {
       const firestoreBenchmarks = await getBenchmarks();
-      startTransition(() => {
-        setBenchmarks(firestoreBenchmarks);
-      });
+      setBenchmarks(firestoreBenchmarks);
     } catch (error) {
       console.error("Failed to load benchmarks from Firestore", error);
       toast({
@@ -74,9 +86,6 @@ function DashboardContent() {
     }
   };
   
-  useEffect(() => {
-    loadBenchmarks();
-  }, []);
 
   const handleAddNew = () => {
     setEditingBenchmark(null);
@@ -95,22 +104,15 @@ function DashboardContent() {
   }
 
   const handleDelete = async (id: string) => {
-    const originalBenchmarks = [...benchmarks];
-    
-    // Optimistically update UI
-    setBenchmarks(benchmarks.filter(b => b.id !== id));
-    if (activeBenchmark?.id === id) {
-        setActiveBenchmark(null);
-    }
-
     try {
       await deleteBenchmark(id);
       toast({ title: 'Success', description: 'Benchmark deleted successfully.' });
-      // No need to call loadBenchmarks() here as UI is already updated
+      if (activeBenchmark?.id === id) {
+        setActiveBenchmark(null);
+      }
+      loadBenchmarks(); // Reload data after successful deletion
     } catch (error) {
        console.error("Failed to delete benchmark:", error);
-       // Revert UI on error
-       setBenchmarks(originalBenchmarks);
        toast({
          variant: "destructive",
          title: "Error",
@@ -136,10 +138,7 @@ function DashboardContent() {
         await addBenchmark(data);
         toast({ title: 'Success', description: 'Benchmark added successfully.' });
       }
-      
       handleCancelForm();
-      await loadBenchmarks(); // Explicitly reload data from Firestore
-
     } catch (error) {
        console.error("Failed to save benchmark:", error);
        toast({
@@ -384,5 +383,3 @@ export default function DashboardPage() {
         </Suspense>
     )
 }
-
-    
