@@ -20,7 +20,7 @@ import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from '
 import type { DropdownMenuCheckboxItemProps } from "@radix-ui/react-dropdown-menu"
 import { COUNTRIES, PAYMENT_STRATEGIES, PAYMENT_METHODS, CONNECTION_OPTIONS } from '@/lib/constants';
 import { MissingApiKeyAlert } from '@/components/missing-api-key-alert';
-import { getBenchmarks, addBenchmark, updateBenchmark, deleteBenchmark } from '@/lib/actions';
+import { getBenchmarks, addBenchmarkWithId, updateBenchmark, deleteBenchmark } from '@/lib/actions';
 import Link from 'next/link';
 
 
@@ -140,13 +140,14 @@ function DashboardContent() {
   }
 
 
-  const handleSave = async (data: BenchmarkInput, id?: string) => {
+  const handleSave = async (data: BenchmarkInput, id: string) => {
     try {
-      if (id) {
+      const isUpdating = benchmarks.some(b => b.id === id);
+      if (isUpdating) {
         await updateBenchmark(id, data);
         toast({ title: 'Success', description: 'Benchmark updated successfully.' });
       } else {
-        await addBenchmark(data);
+        await addBenchmarkWithId(id, data);
         toast({ title: 'Success', description: 'Benchmark added successfully.' });
       }
       handleCancelForm();

@@ -1,7 +1,7 @@
 
 'use server';
 
-import { collection, getDocs, doc, deleteDoc, Timestamp, addDoc, updateDoc } from 'firebase/firestore';
+import { collection, getDocs, doc, deleteDoc, Timestamp, addDoc, updateDoc, setDoc } from 'firebase/firestore';
 import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { db, storage } from './firebase';
 import type { Benchmark, BenchmarkInput } from './types';
@@ -36,8 +36,15 @@ export async function getBenchmarks(): Promise<Benchmark[]> {
   }
 }
 
-// This function adds a new benchmark to the 'benchmarks' collection.
+// This function is deprecated and will be replaced by addBenchmarkWithId
 export async function addBenchmark(benchmarkData: BenchmarkInput) {
+    const newId = uuidv4();
+    return addBenchmarkWithId(newId, benchmarkData);
+}
+
+
+// This function adds a new benchmark with a specific ID.
+export async function addBenchmarkWithId(id: string, benchmarkData: BenchmarkInput) {
   try {
     const dataWithTimestamp = {
       ...benchmarkData,
@@ -62,7 +69,7 @@ export async function addBenchmark(benchmarkData: BenchmarkInput) {
       screenshots: benchmarkData.screenshots || [],
       lastUpdated: Timestamp.now(),
     };
-    await addDoc(collection(db, 'benchmarks'), dataWithTimestamp);
+    await setDoc(doc(db, 'benchmarks', id), dataWithTimestamp);
   } catch (error) {
     console.error("Error adding benchmark: ", error);
     throw new Error("Could not add benchmark.");

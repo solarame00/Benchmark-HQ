@@ -19,15 +19,16 @@ import { Textarea } from '@/components/ui/textarea';
 import { Switch } from '@/components/ui/switch';
 import type { Benchmark, BenchmarkInput, Screenshot } from '@/lib/types';
 import { FileText, Loader2, Plus, Trash2, UploadCloud, X } from 'lucide-react';
-import { useState, useEffect, useId } from 'react';
+import { useState, useEffect } from 'react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { COUNTRIES, CONNECTION_OPTIONS, PAYMENT_STRATEGIES, PAYMENT_METHODS, CURRENCIES } from '@/lib/constants';
 import { RadioGroup, RadioGroupItem } from './ui/radio-group';
 import { Checkbox } from './ui/checkbox';
-import { uploadScreenshot } from '@/lib/actions';
+import { addBenchmarkWithId, uploadScreenshot } from '@/lib/actions';
 import { useToast } from '@/hooks/use-toast';
 import Image from 'next/image';
 import { Card, CardContent } from './ui/card';
+import { v4 as uuidv4 } from 'uuid';
 
 
 const screenshotSchema = z.object({
@@ -74,7 +75,10 @@ type BenchmarkFormProps = {
 export function BenchmarkForm({ benchmark, onSave, onCancel }: BenchmarkFormProps) {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const { toast } = useToast();
-  const benchmarkId = useId();
+  
+  // Generate a stable, unique ID for the benchmark as soon as the form is used.
+  // This is crucial for creating a stable storage path for file uploads *before* the document is saved.
+  const [benchmarkId] = useState(() => benchmark?.id || uuidv4());
 
   const [screenshots, setScreenshots] = useState<Screenshot[]>(benchmark?.screenshots || []);
   const [screenshotFile, setScreenshotFile] = useState<File | null>(null);
@@ -125,13 +129,15 @@ export function BenchmarkForm({ benchmark, onSave, onCancel }: BenchmarkFormProp
     }
     setIsUploading(true);
     try {
-      const downloadURL = await uploadScreenshot(benchmark?.id || benchmarkId, screenshotFile);
+      // We use the stable `benchmarkId` here, which is guaranteed to be a valid UUID.
+      const downloadURL = await uploadScreenshot(benchmarkId, screenshotFile);
       setScreenshots([...screenshots, { url: downloadURL, label: screenshotLabel }]);
       setScreenshotFile(null);
       setScreenshotLabel('');
       toast({ title: 'Success', description: 'File uploaded.' });
     } catch (error) {
-      toast({ variant: 'destructive', title: 'Upload Failed', description: 'Could not upload the file.' });
+      console.error("Upload failed:", error);
+      toast({ variant: 'destructive', title: 'Upload Failed', description: 'Could not upload the file. Please try again.' });
     } finally {
       setIsUploading(false);
     }
@@ -166,7 +172,8 @@ export function BenchmarkForm({ benchmark, onSave, onCancel }: BenchmarkFormProp
       screenshots: screenshots,
     };
     
-    onSave(dataToSave, benchmark?.id);
+    // We pass the stable benchmarkId to the onSave handler.
+    onSave(dataToSave, benchmarkId);
     setIsSubmitting(false);
   }
 
