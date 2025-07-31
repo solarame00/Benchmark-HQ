@@ -25,6 +25,18 @@ export default function StatsPage() {
     loadData();
   }, []);
 
+  const getHostname = (url: string) => {
+    if (!url || !url.startsWith('http')) {
+        return url || 'No URL';
+    }
+    try {
+        return new URL(url).hostname.replace('www.', '');
+    } catch (error) {
+        console.error('Invalid URL:', url, error);
+        return url;
+    }
+  };
+
   const marketDistribution = useMemo(() => {
     if (loading) return [];
     const counts: { [key: string]: number } = {};
@@ -51,7 +63,7 @@ export default function StatsPage() {
       .slice()
       .sort((a, b) => (b.score || 0) - (a.score || 0))
       .map(b => ({
-        name: new URL(b.url).hostname.replace('www.',''),
+        name: getHostname(b.url),
         Score: b.score,
         'Traffic (K)': b.organicTraffic,
       }));
