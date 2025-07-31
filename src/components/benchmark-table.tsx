@@ -40,14 +40,18 @@ import {
 } from './ui/dropdown-menu';
 import { Skeleton } from './ui/skeleton';
 import { format } from 'date-fns';
+import { Checkbox } from './ui/checkbox';
 
 type BenchmarkTableProps = {
   benchmarks: Benchmark[];
   loading?: boolean;
-  onEdit: (benchmark: Benchmark) => void;
-  onClone: (benchmark: Benchmark) => void;
-  onDelete: (id: string) => void;
+  onEdit?: (benchmark: Benchmark) => void;
+  onClone?: (benchmark: Benchmark) => void;
+  onDelete?: (id: string) => void;
   isDetailsView?: boolean;
+  isComparisonView?: boolean;
+  selectedBenchmarks?: string[];
+  onSelectBenchmark?: (id: string) => void;
 };
 
 const pricingLabels: Record<keyof Omit<Pricing, 'currency'>, string> = {
@@ -59,16 +63,43 @@ const pricingLabels: Record<keyof Omit<Pricing, 'currency'>, string> = {
     lifetime: 'Lifetime',
 };
 
-export function BenchmarkTable({ benchmarks, loading, onEdit, onClone, onDelete, isDetailsView = false }: BenchmarkTableProps) {
+export function BenchmarkTable({ 
+    benchmarks, 
+    loading, 
+    onEdit = () => {}, 
+    onClone = () => {}, 
+    onDelete = () => {}, 
+    isDetailsView = false,
+    isComparisonView = false,
+    selectedBenchmarks = [],
+    onSelectBenchmark = () => {}
+}: BenchmarkTableProps) {
   
   const formatDate = (dateString: string | Date) => {
+    if (!dateString) return 'N/A';
     try {
         const date = new Date(dateString);
+        // Check if date is valid
+        if (isNaN(date.getTime())) {
+            return 'N/A';
+        }
         return format(date, 'PPpp');
     } catch {
         return 'N/A';
     }
   }
+
+  const getHostname = (url: string) => {
+    if (!url || !url.startsWith('http')) {
+        return url || 'No URL';
+    }
+    try {
+        return new URL(url).hostname.replace('www.', '');
+    } catch (error) {
+        console.error('Invalid URL:', url, error);
+        return url;
+    }
+  };
 
   const renderValue = (value: any, key: string) => {
     if (typeof value === 'boolean') {
@@ -83,10 +114,10 @@ export function BenchmarkTable({ benchmarks, loading, onEdit, onClone, onDelete,
       );
     }
     if (typeof value === 'string' && value.startsWith('http')) {
-        return <a href={value} target="_blank" rel="noopener noreferrer" className="hover:underline text-primary">{value}</a>
+        return <a href={value} target="_blank" rel="noopener noreferrer" className="hover:underline text-primary break-all">{value}</a>
     }
     if (key === 'organicTraffic' && typeof value === 'number') {
-        return `${value}K`;
+        return `${value.toLocaleString()}K`;
     }
      if (key === 'pricing' && typeof value === 'object' && value !== null) {
         const pricing = value as Pricing;
@@ -166,7 +197,7 @@ export function BenchmarkTable({ benchmarks, loading, onEdit, onClone, onDelete,
                                 <AlertDialogHeader>
                                     <AlertDialogTitle>Are you sure?</AlertDialogTitle>
                                     <AlertDialogDescription>
-                                    This action cannot be undone. This will permanently delete the benchmark data for <span className="font-semibold">{benchmark.url}</span>.
+                                    This action cannot be undone. This will permanently delete the benchmark data for <span className="font-semibold">{getHostname(benchmark.url)}</span>.
                                     </AlertDialogDescription>
                                 </AlertDialogHeader>
                                 <AlertDialogFooter>
@@ -186,11 +217,62 @@ export function BenchmarkTable({ benchmarks, loading, onEdit, onClone, onDelete,
     );
   }
 
+  if (isComparisonView) {
+    if (benchmarks.length === 0) return <p>No benchmarks to compare.</p>;
+
+    const allKeys = Array.from(new Set(benchmarks.flatMap(b => Object.keys(b))))
+        .filter(key => key !== 'id' && key !== 'url') as (keyof Omit<Benchmark, 'id'|'url'>)[];
+    
+    return (
+        <div className="rounded-lg border">
+        <Table>
+            <TableHeader>
+            <TableRow>
+                <TableHead className="font-bold">Feature</TableHead>
+                {benchmarks.map(b => (
+                    <TableHead key={b.id} className="font-bold">
+                         <a href={b.url} target="_blank" rel="noopener noreferrer" className="hover:underline flex items-center gap-2">
+                            <Globe className="h-4 w-4 text-muted-foreground" />
+                            {getHostname(b.url)}
+                        </a>
+                    </TableHead>
+                ))}
+            </TableRow>
+            </TableHeader>
+            <TableBody>
+                {allKeys.map(key => (
+                    <TableRow key={key}>
+                        <TableCell className="font-semibold">{fieldLabels[key] || key}</TableCell>
+                        {benchmarks.map(b => (
+                            <TableCell key={`${b.id}-${key}`}>{key === 'lastUpdated' ? formatDate(b[key]) : renderValue(b[key], key)}</TableCell>
+                        ))}
+                    </TableRow>
+                ))}
+            </TableBody>
+        </Table>
+        </div>
+    )
+  }
+
   return (
     <div className="rounded-lg border">
       <Table>
         <TableHeader>
           <TableRow>
+            <TableHead className="w-12">
+                 <Checkbox 
+                    checked={selectedBenchmarks.length > 0 && selectedBenchmarks.length === benchmarks.length}
+                    onCheckedChange={(checked) => {
+                        benchmarks.forEach(b => {
+                           if (checked && !selectedBenchmarks.includes(b.id)) {
+                               onSelectBenchmark(b.id);
+                           } else if (!checked && selectedBenchmarks.includes(b.id)) {
+                               onSelectBenchmark(b.id);
+                           }
+                        })
+                    }}
+                 />
+            </TableHead>
             <TableHead>Website</TableHead>
             <TableHead>Score</TableHead>
             <TableHead>Primary Market</TableHead>
@@ -204,18 +286,25 @@ export function BenchmarkTable({ benchmarks, loading, onEdit, onClone, onDelete,
           {loading ? (
             Array.from({ length: 5 }).map((_, i) => (
               <TableRow key={i}>
-                <TableCell colSpan={7}>
+                <TableCell colSpan={8}>
                   <Skeleton className="h-8 w-full" />
                 </TableCell>
               </TableRow>
             ))
           ) : benchmarks.length > 0 ? (
             benchmarks.map((b) => (
-              <TableRow key={b.id}>
+              <TableRow key={b.id} data-state={selectedBenchmarks.includes(b.id) ? 'selected' : ''}>
+                <TableCell>
+                    <Checkbox 
+                        checked={selectedBenchmarks.includes(b.id)}
+                        onCheckedChange={() => onSelectBenchmark(b.id)}
+                        aria-label={`Select ${getHostname(b.url)}`}
+                    />
+                </TableCell>
                 <TableCell className="font-medium max-w-xs truncate">
                   <a href={b.url} target="_blank" rel="noopener noreferrer" className="hover:underline flex items-center gap-2">
                     <Globe className="h-4 w-4 text-muted-foreground" />
-                    {b.url || 'No URL'}
+                    {getHostname(b.url)}
                   </a>
                 </TableCell>
                 <TableCell>
@@ -267,7 +356,7 @@ export function BenchmarkTable({ benchmarks, loading, onEdit, onClone, onDelete,
                       <AlertDialogHeader>
                         <AlertDialogTitle>Are you sure?</AlertDialogTitle>
                         <AlertDialogDescription>
-                          This action cannot be undone. This will permanently delete the benchmark data for <span className="font-semibold">{b.url}</span>.
+                          This action cannot be undone. This will permanently delete the benchmark data for <span className="font-semibold">{getHostname(b.url)}</span>.
                         </AlertDialogDescription>
                       </AlertDialogHeader>
                       <AlertDialogFooter>
@@ -283,7 +372,7 @@ export function BenchmarkTable({ benchmarks, loading, onEdit, onClone, onDelete,
             ))
           ) : (
             <TableRow>
-              <TableCell colSpan={7} className="text-center h-24">
+              <TableCell colSpan={8} className="text-center h-24">
                 No benchmarks found.
               </TableCell>
             </TableRow>

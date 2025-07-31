@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import { useState, useEffect, useMemo, Suspense } from 'react';
@@ -9,17 +10,18 @@ import { BenchmarkForm } from '@/components/benchmark-form';
 import { BenchmarkCard } from '@/components/benchmark-card';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
-import { PlusCircle, Search, Table, X, ChevronDown } from 'lucide-react';
+import { PlusCircle, Search, Table, X, ChevronDown, ArrowRight } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { DropdownMenu, DropdownMenuCheckboxItem, DropdownMenuContent, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
-import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription, SheetClose } from '@/components/ui/sheet';
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from '@/components/ui/sheet';
 import type { DropdownMenuCheckboxItemProps } from "@radix-ui/react-dropdown-menu"
 import { COUNTRIES, PAYMENT_STRATEGIES, PAYMENT_METHODS, CONNECTION_OPTIONS } from '@/lib/constants';
 import { MissingApiKeyAlert } from '@/components/missing-api-key-alert';
 import { getBenchmarks, addBenchmark, updateBenchmark, deleteBenchmark } from '@/lib/actions';
+import Link from 'next/link';
 
 
 type Checked = DropdownMenuCheckboxItemProps["checked"]
@@ -33,6 +35,7 @@ function DashboardContent() {
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [activeBenchmark, setActiveBenchmark] = useState<Benchmark | null>(null);
+  const [selectedBenchmarks, setSelectedBenchmarks] = useState<string[]>([]);
 
   const [filters, setFilters] = useState({
     primaryMarket: 'all',
@@ -118,6 +121,7 @@ function DashboardContent() {
       if (activeBenchmark?.id === id) {
         setActiveBenchmark(null);
       }
+      setSelectedBenchmarks(prev => prev.filter(selectedId => selectedId !== id));
       loadBenchmarks();
     } catch (error) {
        console.error("Failed to delete benchmark:", error);
@@ -163,6 +167,12 @@ function DashboardContent() {
   const handlePaymentMethodFilterChange = (method: string) => (checked: boolean) => {
     setPaymentMethodsFilter(prev => 
       checked ? [...prev, method] : prev.filter(m => m !== method)
+    );
+  };
+  
+  const handleSelectBenchmark = (id: string) => {
+    setSelectedBenchmarks(prev => 
+        prev.includes(id) ? prev.filter(item => item !== id) : [...prev, id]
     );
   };
 
@@ -403,6 +413,8 @@ function DashboardContent() {
                     key={b.id}
                     benchmark={b}
                     isActive={activeBenchmark?.id === b.id}
+                    isSelected={selectedBenchmarks.includes(b.id)}
+                    onSelect={() => handleSelectBenchmark(b.id)}
                     onClick={() => handleCardClick(b)}
                     onEdit={() => handleEdit(b)}
                     onClone={() => handleClone(b)}
@@ -437,7 +449,27 @@ function DashboardContent() {
             onEdit={handleEdit}
             onClone={handleClone}
             onDelete={handleDelete}
+            selectedBenchmarks={selectedBenchmarks}
+            onSelectBenchmark={handleSelectBenchmark}
         />
+      )}
+
+      {selectedBenchmarks.length > 0 && (
+          <div className="fixed bottom-4 right-4 z-50">
+              <Card className="p-4 flex items-center gap-4 shadow-lg">
+                  <div className="text-sm font-medium">
+                      {selectedBenchmarks.length} item(s) selected
+                  </div>
+                  <Button asChild>
+                      <Link href={`/compare?ids=${selectedBenchmarks.join(',')}`}>
+                          Compare <ArrowRight className="ml-2 h-4 w-4" />
+                      </Link>
+                  </Button>
+                  <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => setSelectedBenchmarks([])}>
+                      <X className="h-4 w-4" />
+                  </Button>
+              </Card>
+          </div>
       )}
     </div>
   );
