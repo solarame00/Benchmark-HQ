@@ -108,8 +108,10 @@ function DashboardContent() {
   }
 
   const handleClone = (benchmark: Benchmark) => {
-    const clonedBenchmark = { ...benchmark, id: '' };
-    setEditingBenchmark(clonedBenchmark as Benchmark);
+    // When cloning, create a new object and explicitly set its ID to null/empty.
+    // This tells the BenchmarkForm that it's a new entry, not an update.
+    const { id, ...clonedData } = benchmark;
+    setEditingBenchmark({ ...clonedData, id: '' } as Benchmark);
     setViewingBenchmark(null);
     const current = new URL(window.location.href);
     current.searchParams.set('showForm', 'true');
@@ -145,6 +147,7 @@ function DashboardContent() {
 
   const handleSave = async (data: BenchmarkInput, id: string) => {
     try {
+      // The form gives us an ID. We check if a benchmark with this ID already exists.
       const isUpdating = benchmarks.some(b => b.id === id);
       if (isUpdating) {
         await updateBenchmark(id, data);
@@ -280,9 +283,9 @@ function DashboardContent() {
   
   if (!selectedMarket) {
      return (
-        <div className="flex flex-col gap-4">
+        <div className="flex flex-col gap-6">
             <div className="flex items-center justify-between gap-4 flex-wrap">
-                <h1 className="text-2xl font-bold tracking-tight">Select a Primary Market</h1>
+                <h1 className="text-3xl font-bold tracking-tight">Select a Primary Market</h1>
                 <Button onClick={handleAddNew}>
                     <PlusCircle className="mr-2 h-4 w-4" />
                     Add New
@@ -295,9 +298,9 @@ function DashboardContent() {
             ) : (
                 <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5">
                     {marketCounts.map(market => (
-                        <Card key={market.name} onClick={() => setSelectedMarket(market.name)} className="cursor-pointer hover:shadow-lg hover:ring-2 hover:ring-primary transition-all">
+                        <Card key={market.name} onClick={() => setSelectedMarket(market.name)} className="cursor-pointer hover:shadow-lg transition-shadow duration-300 hover:ring-2 hover:ring-primary">
                             <CardHeader>
-                                <CardTitle className="flex items-center gap-3">
+                                <CardTitle className="flex items-center gap-3 text-xl">
                                     <Globe className="h-6 w-6 text-primary" />
                                     <span>{market.name}</span>
                                 </CardTitle>
@@ -322,7 +325,7 @@ function DashboardContent() {
             <Button variant="outline" size="icon" onClick={() => setSelectedMarket(null)}>
                 <ArrowLeft className="h-4 w-4" />
             </Button>
-            <h1 className="text-2xl font-bold tracking-tight">
+            <h1 className="text-3xl font-bold tracking-tight">
                 {selectedMarket} Benchmarks
             </h1>
         </div>

@@ -47,7 +47,7 @@ export function BenchmarkCard({ benchmark, isSelected, onSelect, onViewDetails, 
             <Card 
                 onClick={handleCardClick}
                 className={cn(
-                    "flex flex-col transition-all hover:shadow-md relative cursor-pointer",
+                    "flex flex-col transition-all duration-300 hover:shadow-xl hover:-translate-y-1 relative cursor-pointer",
                     isSelected && "ring-2 ring-primary shadow-lg"
                 )}
             >

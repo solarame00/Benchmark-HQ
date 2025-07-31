@@ -68,7 +68,7 @@ const formSchema = z.object({
 
 type BenchmarkFormProps = {
   benchmark?: Benchmark | null;
-  onSave: (data: BenchmarkInput, id?: string) => void;
+  onSave: (data: BenchmarkInput, id: string) => void;
   onCancel: () => void;
 };
 
@@ -528,7 +528,7 @@ export function BenchmarkForm({ benchmark, onSave, onCancel }: BenchmarkFormProp
         <div className="flex gap-2">
             <Button type="submit" disabled={isSubmitting}>
             {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-            {benchmark ? 'Update Benchmark' : 'Save Benchmark'}
+            {benchmark?.id ? 'Update Benchmark' : 'Save Benchmark'}
             </Button>
             <Button type="button" variant="outline" onClick={onCancel} disabled={isSubmitting}>
                 Cancel

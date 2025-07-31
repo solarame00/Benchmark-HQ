@@ -36,13 +36,6 @@ export async function getBenchmarks(): Promise<Benchmark[]> {
   }
 }
 
-// This function is deprecated and will be replaced by addBenchmarkWithId
-export async function addBenchmark(benchmarkData: BenchmarkInput) {
-    const newId = uuidv4();
-    return addBenchmarkWithId(newId, benchmarkData);
-}
-
-
 // This function adds a new benchmark with a specific ID.
 export async function addBenchmarkWithId(id: string, benchmarkData: BenchmarkInput) {
   try {
@@ -105,6 +98,9 @@ export async function deleteBenchmark(id: string) {
 // This function uploads a screenshot to Firebase Storage.
 export async function uploadScreenshot(benchmarkId: string, file: File) {
   try {
+    if (!benchmarkId) {
+        throw new Error("Benchmark ID is required for upload.");
+    }
     const uniqueFilename = `${uuidv4()}-${file.name}`;
     const storageRef = ref(storage, `benchmarks/${benchmarkId}/${uniqueFilename}`);
     const snapshot = await uploadBytes(storageRef, file);

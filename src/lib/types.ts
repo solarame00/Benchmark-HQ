@@ -36,7 +36,10 @@ export type Benchmark = {
   notes: string;
   tags: string[];
   screenshots: Screenshot[];
-  lastUpdated: string; // Using ISO string for localStorage
+  lastUpdated: string; // Using ISO string for client-side compatibility
 };
 
+// BenchmarkInput is used for creating or updating benchmarks.
+// 'id' is handled separately (generated for new, used for updates).
+// 'lastUpdated' is always set on the server.
 export type BenchmarkInput = Omit<Benchmark, "id" | "lastUpdated">;
