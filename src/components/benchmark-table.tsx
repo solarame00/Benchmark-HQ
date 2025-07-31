@@ -31,6 +31,16 @@ import {
   MoreVertical,
   Trash2,
   XCircle,
+  TrendingUp,
+  MapPin,
+  Calendar,
+  DollarSign,
+  CreditCard,
+  KeyRound,
+  FileText,
+  Tags,
+  Clock,
+  ExternalLink,
 } from 'lucide-react';
 import {
   DropdownMenu,
@@ -41,6 +51,8 @@ import {
 import { Skeleton } from './ui/skeleton';
 import { format } from 'date-fns';
 import { Checkbox } from './ui/checkbox';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from './ui/card';
+import { Separator } from './ui/separator';
 
 type BenchmarkTableProps = {
   benchmarks: Benchmark[];
@@ -162,58 +174,157 @@ export function BenchmarkTable({
     lastUpdated: 'Last Updated',
   };
 
+const DetailItem = ({ icon: Icon, label, children }: { icon: React.ElementType, label: string, children: React.ReactNode }) => (
+    <div className="flex flex-col gap-1">
+        <div className="flex items-center gap-2 text-sm text-muted-foreground">
+            <Icon className="h-4 w-4" />
+            <span>{label}</span>
+        </div>
+        <div className="text-base font-medium pl-6">{children}</div>
+    </div>
+);
+
+const BooleanDetailItem = ({ icon: Icon, label, value }: { icon: React.ElementType, label: string, value: boolean }) => (
+     <div className="flex items-center justify-between rounded-lg border p-3">
+        <div className="flex items-center gap-2">
+            <Icon className="h-4 w-4 text-muted-foreground" />
+            <span className="text-sm font-medium">{label}</span>
+        </div>
+        {value ? <CheckCircle className="h-5 w-5 text-green-500" /> : <XCircle className="h-5 w-5 text-red-500" />}
+    </div>
+);
+
 
   if (isDetailsView && benchmarks.length > 0) {
     const benchmark = benchmarks[0];
-    const entries = Object.entries(benchmark).filter(([key]) => key !== 'id') as [keyof Omit<Benchmark, 'id'>, any][];
+    const pricingEntries = Object.entries(benchmark.pricing || {}).filter(([key, value]) => key !== 'currency' && value) as [keyof Omit<Pricing, 'currency'>, string][];
 
     return (
-      <div className="-mx-6 -mt-6 border-t">
-        <Table>
-          <TableBody>
-            {entries.map(([key, value]) => (
-              <TableRow key={key}>
-                <TableCell className="font-semibold w-1/4">{fieldLabels[key]}</TableCell>
-                <TableCell className="whitespace-pre-wrap">{key === 'lastUpdated' ? formatDate(value) : renderValue(value, key)}</TableCell>
-              </TableRow>
-            ))}
-             <TableRow>
-                <TableCell className="font-semibold">Actions</TableCell>
-                <TableCell>
-                    <div className="flex gap-2">
-                         <Button variant="outline" size="sm" onClick={() => onEdit(benchmark)}>
-                            <Edit className="mr-2 h-4 w-4" /> Edit
-                        </Button>
-                         <Button variant="outline" size="sm" onClick={() => onClone(benchmark)}>
-                            <Copy className="mr-2 h-4 w-4" /> Clone
-                        </Button>
-                        <AlertDialog>
-                            <AlertDialogTrigger asChild>
-                                 <Button variant="destructive" size="sm">
-                                    <Trash2 className="mr-2 h-4 w-4" /> Delete
-                                </Button>
-                            </AlertDialogTrigger>
-                             <AlertDialogContent>
-                                <AlertDialogHeader>
-                                    <AlertDialogTitle>Are you sure?</AlertDialogTitle>
-                                    <AlertDialogDescription>
-                                    This action cannot be undone. This will permanently delete the benchmark data for <span className="font-semibold">{getHostname(benchmark.url)}</span>.
-                                    </AlertDialogDescription>
-                                </AlertDialogHeader>
-                                <AlertDialogFooter>
-                                    <AlertDialogCancel>Cancel</AlertDialogCancel>
-                                    <AlertDialogAction onClick={() => onDelete(benchmark.id)} className="bg-destructive hover:bg-destructive/90">
-                                    Delete
-                                    </AlertDialogAction>
-                                </AlertDialogFooter>
-                            </AlertDialogContent>
-                        </AlertDialog>
+       <div className="space-y-6">
+            <Card>
+                <CardHeader>
+                    <div className="flex justify-between items-start">
+                        <CardTitle className="text-xl">Key Metrics</CardTitle>
+                        <Badge variant={benchmark.score > 7 ? 'default' : benchmark.score > 4 ? 'secondary' : 'destructive'} className="text-base">
+                            Score: {benchmark.score || 0}
+                        </Badge>
                     </div>
-                </TableCell>
-             </TableRow>
-          </TableBody>
-        </Table>
-      </div>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                    <DetailItem icon={TrendingUp} label="Organic Traffic">
+                      {benchmark.organicTraffic ? `${benchmark.organicTraffic.toLocaleString()}K` : 'N/A'}
+                    </DetailItem>
+                    <DetailItem icon={MapPin} label="Primary Market">
+                      {benchmark.primaryMarket || 'N/A'}
+                    </DetailItem>
+                    <DetailItem icon={Calendar} label="Start Timeline">
+                        {benchmark.startTimeline || 'N/A'}
+                    </DetailItem>
+                    <DetailItem icon={Clock} label="Last Updated">
+                      {formatDate(benchmark.lastUpdated)}
+                    </DetailItem>
+                </CardContent>
+            </Card>
+
+            <Card>
+                <CardHeader><CardTitle className="text-xl">Features</CardTitle></CardHeader>
+                <CardContent className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <BooleanDetailItem icon={KeyRound} label="Offers Trial" value={benchmark.offerTrial} />
+                    <BooleanDetailItem icon={FileText} label="Has Blog" value={benchmark.hasBlog} />
+                    <BooleanDetailItem icon={ExternalLink} label="Has Resell Panel" value={benchmark.hasResellPanel} />
+                    <BooleanDetailItem icon={KeyRound} label="Requires Account" value={benchmark.requiresAccount} />
+                </CardContent>
+            </Card>
+
+            <Card>
+                <CardHeader><CardTitle className="text-xl">Payments & Pricing</CardTitle></CardHeader>
+                <CardContent className="space-y-4">
+                     <DetailItem icon={CreditCard} label="Payment Strategy">
+                        {benchmark.paymentStrategy || 'N/A'}
+                    </DetailItem>
+                     {benchmark.paymentRedirect && (
+                        <DetailItem icon={ExternalLink} label="Payment Redirect">
+                            <a href={benchmark.paymentRedirect} target="_blank" rel="noopener noreferrer" className="hover:underline text-primary break-all">{benchmark.paymentRedirect}</a>
+                        </DetailItem>
+                    )}
+                    <DetailItem icon={CreditCard} label="Payment Methods">
+                         {benchmark.paymentMethods.length > 0 ? (
+                            <div className="flex flex-wrap gap-1">
+                                {benchmark.paymentMethods.map(p => <Badge key={p} variant="outline">{p}</Badge>)}
+                            </div>
+                        ) : 'N/A'}
+                    </DetailItem>
+
+                    <Separator />
+
+                    <div className="space-y-2">
+                         <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                            <DollarSign className="h-4 w-4" />
+                            <span>Pricing ({benchmark.pricing?.currency || 'N/A'})</span>
+                        </div>
+                        {pricingEntries.length > 0 ? (
+                             <div className="pl-6 grid grid-cols-2 gap-x-4 gap-y-2">
+                                {pricingEntries.map(([period, price]) => (
+                                    <div key={period} className="flex justify-between border-b pb-1">
+                                        <span className="text-sm font-medium">{pricingLabels[period]}: </span>
+                                        <span className="text-sm">{benchmark.pricing?.currency}{price}</span>
+                                    </div>
+                                ))}
+                            </div>
+                        ) : (
+                            <p className="pl-6 text-sm">No pricing information available.</p>
+                        )}
+                    </div>
+                </CardContent>
+            </Card>
+
+             <Card>
+                <CardHeader><CardTitle className="text-xl">Additional Info</CardTitle></CardHeader>
+                <CardContent className="space-y-4">
+                    <DetailItem icon={Tags} label="Keywords">
+                         {benchmark.tags.length > 0 ? (
+                            <div className="flex flex-wrap gap-1">
+                                {benchmark.tags.map(t => <Badge key={t} variant="secondary">{t}</Badge>)}
+                            </div>
+                         ) : 'N/A'}
+                    </DetailItem>
+                    <DetailItem icon={FileText} label="Notes">
+                       <p className="whitespace-pre-wrap">{benchmark.notes || 'N/A'}</p>
+                    </DetailItem>
+                </CardContent>
+            </Card>
+
+
+            <div className="flex gap-2 pt-4">
+                <Button variant="outline" size="sm" onClick={() => onEdit(benchmark)}>
+                    <Edit className="mr-2 h-4 w-4" /> Edit
+                </Button>
+                <Button variant="outline" size="sm" onClick={() => onClone(benchmark)}>
+                    <Copy className="mr-2 h-4 w-4" /> Clone
+                </Button>
+                <AlertDialog>
+                    <AlertDialogTrigger asChild>
+                            <Button variant="destructive" size="sm">
+                            <Trash2 className="mr-2 h-4 w-4" /> Delete
+                        </Button>
+                    </AlertDialogTrigger>
+                        <AlertDialogContent>
+                        <AlertDialogHeader>
+                            <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+                            <AlertDialogDescription>
+                            This action cannot be undone. This will permanently delete the benchmark data for <span className="font-semibold">{getHostname(benchmark.url)}</span>.
+                            </AlertDialogDescription>
+                        </AlertDialogHeader>
+                        <AlertDialogFooter>
+                            <AlertDialogCancel>Cancel</AlertDialogCancel>
+                            <AlertDialogAction onClick={() => onDelete(benchmark.id)} className="bg-destructive hover:bg-destructive/90">
+                            Delete
+                            </AlertDialogAction>
+                        </AlertDialogFooter>
+                    </AlertDialogContent>
+                </AlertDialog>
+            </div>
+        </div>
     );
   }
 
