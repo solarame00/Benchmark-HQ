@@ -224,13 +224,13 @@ export function BenchmarkTable({
         .filter(key => key !== 'id' && key !== 'url') as (keyof Omit<Benchmark, 'id'|'url'>)[];
     
     return (
-        <div className="rounded-lg border">
+        <div className="w-full overflow-x-auto">
         <Table>
             <TableHeader>
             <TableRow>
-                <TableHead className="font-bold">Feature</TableHead>
+                <TableHead className="font-bold sticky left-0 bg-card z-10">Feature</TableHead>
                 {benchmarks.map(b => (
-                    <TableHead key={b.id} className="font-bold">
+                    <TableHead key={b.id} className="font-bold border-l">
                          <a href={b.url} target="_blank" rel="noopener noreferrer" className="hover:underline flex items-center gap-2">
                             <Globe className="h-4 w-4 text-muted-foreground" />
                             {getHostname(b.url)}
@@ -242,9 +242,9 @@ export function BenchmarkTable({
             <TableBody>
                 {allKeys.map(key => (
                     <TableRow key={key}>
-                        <TableCell className="font-semibold">{fieldLabels[key] || key}</TableCell>
+                        <TableCell className="font-semibold sticky left-0 bg-card z-10">{fieldLabels[key] || key}</TableCell>
                         {benchmarks.map(b => (
-                            <TableCell key={`${b.id}-${key}`}>{key === 'lastUpdated' ? formatDate(b[key]) : renderValue(b[key], key)}</TableCell>
+                            <TableCell key={`${b.id}-${key}`} className="border-l">{key === 'lastUpdated' ? formatDate(b[key]) : renderValue(b[key], key)}</TableCell>
                         ))}
                     </TableRow>
                 ))}

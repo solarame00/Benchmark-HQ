@@ -90,7 +90,13 @@ function CompareContent() {
         )
     }
 
-    return <BenchmarkTable benchmarks={benchmarks} isComparisonView={true} />;
+    return (
+        <Card>
+            <CardContent className="p-6">
+                 <BenchmarkTable benchmarks={benchmarks} isComparisonView={true} />
+            </CardContent>
+        </Card>
+    );
 }
 
 

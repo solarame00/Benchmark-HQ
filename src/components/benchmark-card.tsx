@@ -48,12 +48,12 @@ export function BenchmarkCard({ benchmark, isActive, isSelected, onSelect, onCli
         <AlertDialog>
             <Card 
                 className={cn(
-                    "flex flex-col transition-all hover:shadow-md relative",
+                    "flex flex-col transition-all hover:shadow-md relative group",
                     isActive && "ring-2 ring-primary shadow-lg",
                     isSelected && "ring-2 ring-blue-500 shadow-lg"
                 )}
             >
-                 <div data-interactive className="absolute top-2 right-2 z-10">
+                 <div data-interactive className="absolute top-2 right-2 z-10 opacity-0 group-hover:opacity-100 transition-opacity">
                     <Checkbox
                         checked={isSelected}
                         onCheckedChange={onSelect}
@@ -105,7 +105,7 @@ export function BenchmarkCard({ benchmark, isActive, isSelected, onSelect, onCli
                         </div>
                     </CardFooter>
                 </div>
-                 <div data-interactive className="absolute top-2 left-2 z-10">
+                 <div data-interactive className="absolute top-2 left-2 z-10 opacity-0 group-hover:opacity-100 transition-opacity">
                      <DropdownMenu>
                         <DropdownMenuTrigger asChild>
                             <Button variant="ghost" size="icon" className="h-8 w-8 flex-shrink-0">
