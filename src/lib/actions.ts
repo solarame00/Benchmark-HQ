@@ -2,8 +2,11 @@
 'use server';
 
 import { collection, getDocs, doc, deleteDoc, Timestamp, addDoc, updateDoc } from 'firebase/firestore';
-import { db } from './firebase';
+import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
+import { db, storage } from './firebase';
 import type { Benchmark, BenchmarkInput } from './types';
+import { v4 as uuidv4 } from 'uuid';
+
 
 // This function fetches all benchmarks from the 'benchmarks' collection in Firestore.
 export async function getBenchmarks(): Promise<Benchmark[]> {
@@ -21,6 +24,7 @@ export async function getBenchmarks(): Promise<Benchmark[]> {
       benchmarks.push({
         id: doc.id,
         ...data,
+        screenshots: data.screenshots || [],
         lastUpdated: lastUpdatedTimestamp ? lastUpdatedTimestamp.toDate().toISOString() : new Date().toISOString(),
       } as Benchmark);
     });
@@ -55,6 +59,7 @@ export async function addBenchmark(benchmarkData: BenchmarkInput) {
       connections: benchmarkData.connections || '',
       notes: benchmarkData.notes || '',
       tags: benchmarkData.tags || [],
+      screenshots: benchmarkData.screenshots || [],
       lastUpdated: Timestamp.now(),
     };
     await addDoc(collection(db, 'benchmarks'), dataWithTimestamp);
@@ -87,5 +92,19 @@ export async function deleteBenchmark(id: string) {
   } catch (error) {
     console.error("Error deleting benchmark: ", error);
     throw new Error("Could not delete benchmark.");
+  }
+}
+
+// This function uploads a screenshot to Firebase Storage.
+export async function uploadScreenshot(benchmarkId: string, file: File) {
+  try {
+    const uniqueFilename = `${uuidv4()}-${file.name}`;
+    const storageRef = ref(storage, `benchmarks/${benchmarkId}/${uniqueFilename}`);
+    const snapshot = await uploadBytes(storageRef, file);
+    const downloadURL = await getDownloadURL(snapshot.ref);
+    return downloadURL;
+  } catch (error) {
+    console.error("Error uploading screenshot:", error);
+    throw new Error("Could not upload the screenshot.");
   }
 }

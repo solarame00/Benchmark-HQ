@@ -1,7 +1,7 @@
 
 'use client';
 
-import type { Benchmark, Pricing } from '@/lib/types';
+import type { Benchmark, Pricing, Screenshot } from '@/lib/types';
 import {
   Table,
   TableBody,
@@ -41,6 +41,7 @@ import {
   Tags,
   Clock,
   ExternalLink,
+  Camera
 } from 'lucide-react';
 import {
   DropdownMenu,
@@ -53,6 +54,7 @@ import { format } from 'date-fns';
 import { Checkbox } from './ui/checkbox';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from './ui/card';
 import { Separator } from './ui/separator';
+import Image from 'next/image';
 
 type BenchmarkTableProps = {
   benchmarks: Benchmark[];
@@ -117,6 +119,9 @@ export function BenchmarkTable({
     if (typeof value === 'boolean') {
       return value ? <CheckCircle className="h-5 w-5 text-green-500" /> : <XCircle className="h-5 w-5 text-red-500" />;
     }
+    if (key === 'screenshots') {
+        return `${(value as Screenshot[]).length} image(s)`;
+    }
     if (Array.isArray(value)) {
       if (value.length === 0) return 'N/A';
       return (
@@ -171,6 +176,7 @@ export function BenchmarkTable({
     connections: 'Connections',
     notes: 'Notes',
     tags: 'Keywords',
+    screenshots: 'Screenshots',
     lastUpdated: 'Last Updated',
   };
 
@@ -277,6 +283,28 @@ const BooleanDetailItem = ({ icon: Icon, label, value }: { icon: React.ElementTy
                     </div>
                 </CardContent>
             </Card>
+            
+            {benchmark.screenshots && benchmark.screenshots.length > 0 && (
+                <Card>
+                    <CardHeader><CardTitle className="text-xl flex items-center gap-2"><Camera /> Screenshots</CardTitle></CardHeader>
+                    <CardContent className="grid grid-cols-2 md:grid-cols-3 gap-4">
+                        {benchmark.screenshots.map((ss, index) => (
+                            <div key={index} className="group relative">
+                                <a href={ss.url} target="_blank" rel="noopener noreferrer">
+                                    <Image 
+                                        src={ss.url} 
+                                        alt={ss.label} 
+                                        width={200} height={200} 
+                                        className="rounded-lg object-cover aspect-video w-full transition-transform group-hover:scale-105"
+                                        data-ai-hint="screenshot website"
+                                    />
+                                </a>
+                                {ss.label && <p className="text-xs text-center mt-1 text-muted-foreground">{ss.label}</p>}
+                            </div>
+                        ))}
+                    </CardContent>
+                </Card>
+            )}
 
              <Card>
                 <CardHeader><CardTitle className="text-xl">Additional Info</CardTitle></CardHeader>

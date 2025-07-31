@@ -17,14 +17,23 @@ import {
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Switch } from '@/components/ui/switch';
-import type { Benchmark, BenchmarkInput } from '@/lib/types';
-import { Loader2 } from 'lucide-react';
-import { useState, useEffect } from 'react';
+import type { Benchmark, BenchmarkInput, Screenshot } from '@/lib/types';
+import { Loader2, Plus, Trash2, UploadCloud, X } from 'lucide-react';
+import { useState, useEffect, useId } from 'react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { COUNTRIES, CONNECTION_OPTIONS, PAYMENT_STRATEGIES, PAYMENT_METHODS, CURRENCIES } from '@/lib/constants';
 import { RadioGroup, RadioGroupItem } from './ui/radio-group';
 import { Checkbox } from './ui/checkbox';
+import { uploadScreenshot } from '@/lib/actions';
+import { useToast } from '@/hooks/use-toast';
+import Image from 'next/image';
+import { Card, CardContent } from './ui/card';
 
+
+const screenshotSchema = z.object({
+  url: z.string(),
+  label: z.string(),
+});
 
 const formSchema = z.object({
   url: z.string().optional(),
@@ -53,6 +62,7 @@ const formSchema = z.object({
   connections: z.string().optional(),
   notes: z.string().optional(),
   tags: z.string().optional(),
+  screenshots: z.array(screenshotSchema).optional(),
 });
 
 type BenchmarkFormProps = {
@@ -63,6 +73,14 @@ type BenchmarkFormProps = {
 
 export function BenchmarkForm({ benchmark, onSave, onCancel }: BenchmarkFormProps) {
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const { toast } = useToast();
+  const benchmarkId = useId();
+
+  // State for screenshot management
+  const [screenshots, setScreenshots] = useState<Screenshot[]>(benchmark?.screenshots || []);
+  const [screenshotFile, setScreenshotFile] = useState<File | null>(null);
+  const [screenshotLabel, setScreenshotLabel] = useState('');
+  const [isUploading, setIsUploading] = useState(false);
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -93,8 +111,37 @@ export function BenchmarkForm({ benchmark, onSave, onCancel }: BenchmarkFormProp
       connections: benchmark?.connections || '',
       notes: benchmark?.notes || '',
       tags: benchmark?.tags?.join(', ') || '',
+      screenshots: benchmark?.screenshots || [],
     },
   });
+
+   useEffect(() => {
+    form.setValue('screenshots', screenshots);
+  }, [screenshots, form]);
+
+  const handleAddScreenshot = async () => {
+    if (!screenshotFile) {
+      toast({ variant: 'destructive', title: 'Error', description: 'Please select an image file.' });
+      return;
+    }
+    setIsUploading(true);
+    try {
+      const downloadURL = await uploadScreenshot(benchmark?.id || benchmarkId, screenshotFile);
+      setScreenshots([...screenshots, { url: downloadURL, label: screenshotLabel }]);
+      setScreenshotFile(null);
+      setScreenshotLabel('');
+      toast({ title: 'Success', description: 'Screenshot uploaded.' });
+    } catch (error) {
+      toast({ variant: 'destructive', title: 'Upload Failed', description: 'Could not upload the screenshot.' });
+    } finally {
+      setIsUploading(false);
+    }
+  };
+
+  const handleRemoveScreenshot = (index: number) => {
+    setScreenshots(screenshots.filter((_, i) => i !== index));
+  };
+
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
     setIsSubmitting(true);
@@ -117,6 +164,7 @@ export function BenchmarkForm({ benchmark, onSave, onCancel }: BenchmarkFormProp
       connections: values.connections || '',
       notes: values.notes || '',
       tags: values.tags ? values.tags.split(',').map(item => item.trim()).filter(Boolean) : [],
+      screenshots: screenshots,
     };
     
     onSave(dataToSave, benchmark?.id);
@@ -322,6 +370,76 @@ export function BenchmarkForm({ benchmark, onSave, onCancel }: BenchmarkFormProp
               </FormItem>
             )}
           />
+          </div>
+          
+           <div className="grid gap-4 rounded-lg border p-4">
+            <h3 className="font-semibold">Screenshots</h3>
+            <div className="grid md:grid-cols-2 gap-4">
+                <FormItem>
+                    <FormLabel>Screenshot Label</FormLabel>
+                    <FormControl>
+                        <Input 
+                            placeholder="e.g., Checkout Page" 
+                            value={screenshotLabel} 
+                            onChange={(e) => setScreenshotLabel(e.target.value)}
+                        />
+                    </FormControl>
+                </FormItem>
+                <FormItem>
+                    <FormLabel>Image File</FormLabel>
+                    <FormControl>
+                        <Input 
+                            type="file" 
+                            accept="image/*"
+                            onChange={(e) => setScreenshotFile(e.target.files ? e.target.files[0] : null)}
+                        />
+                    </FormControl>
+                </FormItem>
+            </div>
+            <Button type="button" onClick={handleAddScreenshot} disabled={isUploading} className="w-fit">
+                {isUploading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <UploadCloud className="mr-2 h-4 w-4" />}
+                Add Screenshot
+            </Button>
+            {screenshots.length > 0 && (
+                <div className="space-y-4">
+                    <h4 className="font-medium">Uploaded Screenshots</h4>
+                    <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+                        {screenshots.map((ss, index) => (
+                            <Card key={index} className="relative group">
+                                <Image 
+                                    src={ss.url} 
+                                    alt={ss.label} 
+                                    width={150} 
+                                    height={150} 
+                                    className="object-cover rounded-md aspect-square"
+                                    data-ai-hint="screenshot website"
+                                />
+                                <div className="absolute inset-0 bg-black/50 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                                    <Button 
+                                        type="button" 
+                                        variant="destructive" 
+                                        size="icon"
+                                        onClick={() => handleRemoveScreenshot(index)}>
+                                        <Trash2 className="h-4 w-4" />
+                                    </Button>
+                                </div>
+                                <p className="text-xs text-center p-1 truncate">{ss.label}</p>
+                            </Card>
+                        ))}
+                    </div>
+                </div>
+            )}
+            <FormField
+              control={form.control}
+              name="screenshots"
+              render={({ field }) => (
+                <FormItem className="hidden">
+                    <FormControl>
+                        <Input {...field} />
+                    </FormControl>
+                </FormItem>
+              )}
+            />
           </div>
 
           <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-4">

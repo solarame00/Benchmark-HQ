@@ -1,5 +1,10 @@
 
 
+export type Screenshot = {
+  url: string;
+  label: string;
+};
+
 export type Pricing = {
   currency?: string;
   oneMonth?: string;
@@ -30,6 +35,7 @@ export type Benchmark = {
   connections: string;
   notes: string;
   tags: string[];
+  screenshots: Screenshot[];
   lastUpdated: string; // Using ISO string for localStorage
 };
 
