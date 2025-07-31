@@ -34,7 +34,7 @@ function DashboardContent() {
   const [benchmarks, setBenchmarks] = useState<Benchmark[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
-  const [activeBenchmark, setActiveBenchmark] = useState<Benchmark | null>(null);
+  const [viewingBenchmark, setViewingBenchmark] = useState<Benchmark | null>(null);
   const [selectedBenchmarks, setSelectedBenchmarks] = useState<string[]>([]);
 
   const [filters, setFilters] = useState({
@@ -90,7 +90,7 @@ function DashboardContent() {
 
   const handleAddNew = () => {
     setEditingBenchmark(null);
-    setActiveBenchmark(null);
+    setViewingBenchmark(null);
     const current = new URL(window.location.href);
     current.searchParams.set('showForm', 'true');
     router.push(current.toString(), { scroll: false });
@@ -98,7 +98,7 @@ function DashboardContent() {
 
   const handleEdit = (benchmark: Benchmark) => {
     setEditingBenchmark(benchmark);
-    setActiveBenchmark(null);
+    setViewingBenchmark(null);
     const current = new URL(window.location.href);
     current.searchParams.set('showForm', 'true');
     router.push(current.toString(), { scroll: false });
@@ -107,7 +107,7 @@ function DashboardContent() {
   const handleClone = (benchmark: Benchmark) => {
     const clonedBenchmark = { ...benchmark, id: '', url: '' };
     setEditingBenchmark(clonedBenchmark as Benchmark);
-    setActiveBenchmark(null);
+    setViewingBenchmark(null);
     const current = new URL(window.location.href);
     current.searchParams.set('showForm', 'true');
     router.push(current.toString(), { scroll: false });
@@ -118,8 +118,8 @@ function DashboardContent() {
     try {
       await deleteBenchmark(id);
       toast({ title: 'Success', description: 'Benchmark deleted successfully.' });
-      if (activeBenchmark?.id === id) {
-        setActiveBenchmark(null);
+      if (viewingBenchmark?.id === id) {
+        setViewingBenchmark(null);
       }
       setSelectedBenchmarks(prev => prev.filter(selectedId => selectedId !== id));
       loadBenchmarks();
@@ -220,12 +220,8 @@ function DashboardContent() {
     return filtered;
   }, [benchmarks, searchTerm, sortBy, filters, booleanFilters, paymentMethodsFilter]);
 
-  const handleCardClick = (benchmark: Benchmark) => {
-    if (activeBenchmark?.id === benchmark.id) {
-        setActiveBenchmark(null);
-    } else {
-        setActiveBenchmark(benchmark);
-    }
+  const handleViewDetails = (benchmark: Benchmark) => {
+    setViewingBenchmark(benchmark);
   }
 
   const handleSortChange = (value: string) => {
@@ -412,10 +408,9 @@ function DashboardContent() {
                 <BenchmarkCard
                     key={b.id}
                     benchmark={b}
-                    isActive={activeBenchmark?.id === b.id}
                     isSelected={selectedBenchmarks.includes(b.id)}
                     onSelect={() => handleSelectBenchmark(b.id)}
-                    onClick={() => handleCardClick(b)}
+                    onViewDetails={() => handleViewDetails(b)}
                     onEdit={() => handleEdit(b)}
                     onClone={() => handleClone(b)}
                     onDelete={() => handleDelete(b.id)}
@@ -424,15 +419,15 @@ function DashboardContent() {
         </div>
       )}
 
-      {activeBenchmark && (
-        <Sheet open={!!activeBenchmark} onOpenChange={(isOpen) => !isOpen && setActiveBenchmark(null)}>
+      {viewingBenchmark && (
+        <Sheet open={!!viewingBenchmark} onOpenChange={(isOpen) => !isOpen && setViewingBenchmark(null)}>
             <SheetContent className="w-full sm:max-w-xl md:max-w-2xl overflow-y-auto">
                 <SheetHeader className="mb-6 text-left">
                     <SheetTitle>Benchmark Details</SheetTitle>
-                    <SheetDescription>{activeBenchmark.url}</SheetDescription>
+                    <SheetDescription>{viewingBenchmark.url}</SheetDescription>
                 </SheetHeader>
                 <BenchmarkTable
-                    benchmarks={[activeBenchmark]}
+                    benchmarks={[viewingBenchmark]}
                     onEdit={handleEdit}
                     onClone={handleClone}
                     onDelete={handleDelete}
