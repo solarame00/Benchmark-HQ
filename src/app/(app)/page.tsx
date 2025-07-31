@@ -10,7 +10,7 @@ import { BenchmarkForm } from '@/components/benchmark-form';
 import { BenchmarkCard } from '@/components/benchmark-card';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
-import { PlusCircle, Search, Table, X, ChevronDown, ArrowRight } from 'lucide-react';
+import { PlusCircle, Search, Table, X, ChevronDown, ArrowRight, ArrowLeft, Globe } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
@@ -26,6 +26,8 @@ import Link from 'next/link';
 
 type Checked = DropdownMenuCheckboxItemProps["checked"]
 
+const MARKETS_TO_FEATURE = ["France", "USA", "UK", "Spain"];
+
 function DashboardContent() {
   const searchParams = useSearchParams();
   const router = useRouter();
@@ -36,6 +38,8 @@ function DashboardContent() {
   const [searchTerm, setSearchTerm] = useState('');
   const [viewingBenchmark, setViewingBenchmark] = useState<Benchmark | null>(null);
   const [selectedBenchmarks, setSelectedBenchmarks] = useState<string[]>([]);
+  
+  const [selectedMarket, setSelectedMarket] = useState<string | null>(null);
 
   const [filters, setFilters] = useState({
     primaryMarket: 'all',
@@ -182,7 +186,17 @@ function DashboardContent() {
 
 
   const filteredAndSortedBenchmarks = useMemo(() => {
-    let filtered = benchmarks.filter((b) => {
+    let filtered = benchmarks;
+
+    if (selectedMarket) {
+        if (selectedMarket === 'Other') {
+            filtered = benchmarks.filter(b => !MARKETS_TO_FEATURE.includes(b.primaryMarket));
+        } else {
+            filtered = benchmarks.filter(b => b.primaryMarket === selectedMarket);
+        }
+    }
+
+    filtered = filtered.filter((b) => {
       const searchMatch =
         (b.url.toLowerCase().includes(searchTerm.toLowerCase()) ||
         b.notes?.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -222,7 +236,22 @@ function DashboardContent() {
     });
 
     return filtered;
-  }, [benchmarks, searchTerm, sortBy, filters, booleanFilters, paymentMethodsFilter]);
+  }, [benchmarks, searchTerm, sortBy, filters, booleanFilters, paymentMethodsFilter, selectedMarket]);
+
+  const marketCounts = useMemo(() => {
+    const counts: Record<string, number> = {};
+    MARKETS_TO_FEATURE.forEach(m => counts[m] = 0);
+    counts['Other'] = 0;
+
+    benchmarks.forEach(b => {
+        if (MARKETS_TO_FEATURE.includes(b.primaryMarket)) {
+            counts[b.primaryMarket]++;
+        } else {
+            counts['Other']++;
+        }
+    });
+    return counts;
+  }, [benchmarks]);
 
   const handleViewDetails = (benchmark: Benchmark) => {
     setViewingBenchmark(benchmark);
@@ -254,11 +283,55 @@ function DashboardContent() {
         </div>
       );
   }
+  
+  if (!selectedMarket) {
+     return (
+        <div className="flex flex-col gap-4">
+            <div className="flex items-center justify-between gap-4 flex-wrap">
+                <h1 className="text-2xl font-bold tracking-tight">Select a Primary Market</h1>
+                <Button onClick={handleAddNew}>
+                    <PlusCircle className="mr-2 h-4 w-4" />
+                    Add New
+                </Button>
+            </div>
+            {loading ? (
+                <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+                    {Array.from({ length: 5 }).map((_, i) => <Card key={i} className="h-32 animate-pulse bg-muted/50" />)}
+                </div>
+            ) : (
+                <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5">
+                    {[...MARKETS_TO_FEATURE, "Other"].map(market => (
+                        <Card key={market} onClick={() => setSelectedMarket(market)} className="cursor-pointer hover:shadow-lg hover:ring-2 hover:ring-primary transition-all">
+                            <CardHeader>
+                                <CardTitle className="flex items-center gap-3">
+                                    <Globe className="h-6 w-6 text-primary" />
+                                    <span>{market} {market !== 'Other' && 'Market'}</span>
+                                </CardTitle>
+                            </CardHeader>
+                            <CardContent>
+                                <p className="text-2xl font-bold">{marketCounts[market]}</p>
+                                <p className="text-sm text-muted-foreground">Benchmarks</p>
+                            </CardContent>
+                        </Card>
+                    ))}
+                </div>
+            )}
+        </div>
+     );
+  }
+
 
   return (
     <div className="flex flex-col gap-4">
       <div className="flex items-center justify-between gap-4 flex-wrap">
-        <h1 className="text-2xl font-bold tracking-tight">All Benchmarks</h1>
+        <div className="flex items-center gap-3">
+            <Button variant="outline" size="icon" onClick={() => setSelectedMarket(null)}>
+                <ArrowLeft className="h-4 w-4" />
+            </Button>
+            <h1 className="text-2xl font-bold tracking-tight">
+                {selectedMarket} Benchmarks
+            </h1>
+        </div>
         <div className="flex items-center gap-2">
             <ToggleGroup type="single" value={viewMode} onValueChange={(value) => value && setViewMode(value as any)}>
                  <ToggleGroupItem value="cards" aria-label="Card view">
@@ -277,7 +350,7 @@ function DashboardContent() {
 
        <Card>
             <CardContent className="p-4 space-y-4">
-                 <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-4">
+                 <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
                     <div className="relative flex-grow lg:col-span-2">
                         <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                         <Input
@@ -288,17 +361,7 @@ function DashboardContent() {
                         onChange={(e) => setSearchTerm(e.target.value)}
                         />
                     </div>
-                     <Select onValueChange={(value) => setFilters(f => ({...f, primaryMarket: value}))} defaultValue={filters.primaryMarket}>
-                        <SelectTrigger className="w-full">
-                            <SelectValue placeholder="Filter by primary market" />
-                        </SelectTrigger>
-                        <SelectContent>
-                            <SelectItem value="all">All Primary Markets</SelectItem>
-                            {COUNTRIES.map(country => (
-                              <SelectItem key={country} value={country}>{country}</SelectItem>
-                            ))}
-                        </SelectContent>
-                    </Select>
+                    
                     <Select onValueChange={handleSortChange} defaultValue={sortBy}>
                         <SelectTrigger className="w-full">
                             <SelectValue placeholder="Sort by" />
@@ -390,7 +453,7 @@ function DashboardContent() {
          <Card className="col-span-full text-center py-12">
             <CardHeader>
                 <CardTitle>No Benchmarks Found</CardTitle>
-                <CardDescription>Your search or filter criteria did not match any benchmarks. Try adjusting your filters.</CardDescription>
+                <CardDescription>Your search or filter criteria did not match any benchmarks for this market. Try adjusting your filters.</CardDescription>
             </CardHeader>
             <CardContent>
                 <Button onClick={() => {
