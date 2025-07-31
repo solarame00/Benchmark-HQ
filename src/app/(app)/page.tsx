@@ -105,7 +105,7 @@ function DashboardContent() {
   }
 
   const handleClone = (benchmark: Benchmark) => {
-    const clonedBenchmark = { ...benchmark, id: '', url: '' };
+    const clonedBenchmark = { ...benchmark, id: '' };
     setEditingBenchmark(clonedBenchmark as Benchmark);
     setViewingBenchmark(null);
     const current = new URL(window.location.href);
@@ -171,6 +171,9 @@ function DashboardContent() {
   };
   
   const handleSelectBenchmark = (id: string) => {
+    // When form is open, clicking on cards should not be possible
+    if(showFormParam) return;
+
     setSelectedBenchmarks(prev => 
         prev.includes(id) ? prev.filter(item => item !== id) : [...prev, id]
     );
