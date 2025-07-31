@@ -18,7 +18,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { DropdownMenu, DropdownMenuCheckboxItem, DropdownMenuContent, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from '@/components/ui/sheet';
 import type { DropdownMenuCheckboxItemProps } from "@radix-ui/react-dropdown-menu"
-import { COUNTRIES, PAYMENT_STRATEGIES, PAYMENT_METHODS, CONNECTION_OPTIONS } from '@/lib/constants';
+import { PAYMENT_STRATEGIES, PAYMENT_METHODS, CONNECTION_OPTIONS } from '@/lib/constants';
 import { MissingApiKeyAlert } from '@/components/missing-api-key-alert';
 import { getBenchmarks, addBenchmarkWithId, updateBenchmark, deleteBenchmark } from '@/lib/actions';
 import Link from 'next/link';
@@ -26,7 +26,6 @@ import Link from 'next/link';
 
 type Checked = DropdownMenuCheckboxItemProps["checked"]
 
-const MARKETS_TO_FEATURE = ["France", "USA", "UK", "Spain"];
 
 function DashboardContent() {
   const searchParams = useSearchParams();
@@ -189,11 +188,7 @@ function DashboardContent() {
     let filtered = benchmarks;
 
     if (selectedMarket) {
-        if (selectedMarket === 'Other') {
-            filtered = benchmarks.filter(b => !MARKETS_TO_FEATURE.includes(b.primaryMarket));
-        } else {
-            filtered = benchmarks.filter(b => b.primaryMarket === selectedMarket);
-        }
+        filtered = benchmarks.filter(b => b.primaryMarket === selectedMarket);
     }
 
     filtered = filtered.filter((b) => {
@@ -240,17 +235,16 @@ function DashboardContent() {
 
   const marketCounts = useMemo(() => {
     const counts: Record<string, number> = {};
-    MARKETS_TO_FEATURE.forEach(m => counts[m] = 0);
-    counts['Other'] = 0;
-
     benchmarks.forEach(b => {
-        if (MARKETS_TO_FEATURE.includes(b.primaryMarket)) {
-            counts[b.primaryMarket]++;
-        } else {
-            counts['Other']++;
+        if (b.primaryMarket) {
+            counts[b.primaryMarket] = (counts[b.primaryMarket] || 0) + 1;
         }
     });
-    return counts;
+
+    return Object.entries(counts)
+      .map(([name, count]) => ({ name, count }))
+      .sort((a, b) => b.count - a.count);
+
   }, [benchmarks]);
 
   const handleViewDetails = (benchmark: Benchmark) => {
@@ -296,20 +290,20 @@ function DashboardContent() {
             </div>
             {loading ? (
                 <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-                    {Array.from({ length: 5 }).map((_, i) => <Card key={i} className="h-32 animate-pulse bg-muted/50" />)}
+                    {Array.from({ length: 8 }).map((_, i) => <Card key={i} className="h-32 animate-pulse bg-muted/50" />)}
                 </div>
             ) : (
                 <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5">
-                    {[...MARKETS_TO_FEATURE, "Other"].map(market => (
-                        <Card key={market} onClick={() => setSelectedMarket(market)} className="cursor-pointer hover:shadow-lg hover:ring-2 hover:ring-primary transition-all">
+                    {marketCounts.map(market => (
+                        <Card key={market.name} onClick={() => setSelectedMarket(market.name)} className="cursor-pointer hover:shadow-lg hover:ring-2 hover:ring-primary transition-all">
                             <CardHeader>
                                 <CardTitle className="flex items-center gap-3">
                                     <Globe className="h-6 w-6 text-primary" />
-                                    <span>{market} {market !== 'Other' && 'Market'}</span>
+                                    <span>{market.name}</span>
                                 </CardTitle>
                             </CardHeader>
                             <CardContent>
-                                <p className="text-2xl font-bold">{marketCounts[market]}</p>
+                                <p className="text-2xl font-bold">{market.count}</p>
                                 <p className="text-sm text-muted-foreground">Benchmarks</p>
                             </CardContent>
                         </Card>
