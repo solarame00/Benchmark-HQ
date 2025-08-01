@@ -115,7 +115,7 @@ export function BenchmarkCard({ benchmark, isSelected, onSelect, onViewDetails, 
                 </CardContent>
                 <CardFooter>
                     <div className="flex flex-wrap gap-1">
-                        {benchmark.tags?.slice(0, 3).map((tag) => <Badge key={tag} variant="outline">{tag}</Badge>)}
+                        {benchmark.tags?.slice(0, 3).map((tag, index) => <Badge key={`${tag}-${index}`} variant="outline">{tag}</Badge>)}
                         {benchmark.tags && benchmark.tags.length > 3 && <Badge variant="outline">+{benchmark.tags.length - 3}</Badge>}
                     </div>
                 </CardFooter>
