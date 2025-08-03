@@ -9,6 +9,7 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigge
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
 import { CheckCircle, MoreVertical, Globe, Edit, Trash2, XCircle, Copy, Eye } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import Image from 'next/image';
 
 type BenchmarkCardProps = {
     benchmark: Benchmark;
@@ -47,7 +48,7 @@ export function BenchmarkCard({ benchmark, isSelected, onSelect, onViewDetails, 
             <Card 
                 onClick={handleCardClick}
                 className={cn(
-                    "flex flex-col transition-all duration-300 hover:shadow-xl hover:-translate-y-1 relative cursor-pointer",
+                    "flex flex-col transition-all duration-300 hover:shadow-xl hover:-translate-y-1 relative cursor-pointer group/card",
                     isSelected && "ring-2 ring-primary shadow-lg"
                 )}
             >
@@ -60,9 +61,6 @@ export function BenchmarkCard({ benchmark, isSelected, onSelect, onViewDetails, 
                             </a>
                         </CardTitle>
                          <div data-interactive className="absolute top-2 right-2 flex items-center">
-                             <Button variant="ghost" size="icon" className="h-8 w-8 flex-shrink-0" onClick={onViewDetails}>
-                                <Eye className="h-4 w-4" />
-                             </Button>
                             <DropdownMenu>
                                 <DropdownMenuTrigger asChild>
                                     <Button variant="ghost" size="icon" className="h-8 w-8 flex-shrink-0">
@@ -92,6 +90,22 @@ export function BenchmarkCard({ benchmark, isSelected, onSelect, onViewDetails, 
                     </CardDescription>
                 </CardHeader>
                 <CardContent className="flex-grow space-y-2 text-sm">
+                    <div className="relative mb-4">
+                        <div 
+                            className="aspect-video w-full bg-muted rounded-md flex items-center justify-center overflow-hidden"
+                            data-interactive
+                        >
+                             <Image src="https://placehold.co/600x400.png" alt="Website placeholder" width={600} height={400} className="w-full h-full object-cover" data-ai-hint="website abstract"/>
+                        </div>
+                        <div 
+                            className="absolute inset-0 bg-black/60 opacity-0 group-hover/card:opacity-100 transition-opacity duration-300 flex items-center justify-center rounded-md"
+                            onClick={onViewDetails}
+                            data-interactive
+                        >
+                            <Eye className="h-10 w-10 text-white" />
+                        </div>
+                    </div>
+
                     <div className="flex items-center justify-between">
                         <span className="text-muted-foreground">Trial?</span>
                         {benchmark.offerTrial ? (
