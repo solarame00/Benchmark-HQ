@@ -65,7 +65,7 @@ type BenchmarkTableProps = {
   isDetailsView?: boolean;
   isComparisonView?: boolean;
   selectedBenchmarks?: string[];
-  onSelectBenchmark?: (id: string) => void;
+  onSelectBenchmark?: (id: string, checked: boolean) => void;
 };
 
 const pricingLabels: Record<keyof Omit<Pricing, 'currency'>, string> = {
@@ -147,7 +147,7 @@ export function BenchmarkTable({
              <div className="flex flex-col gap-1">
                 {pricingEntries.map(([period, price]) => (
                     <div key={period}>
-                        <span className="font-semibold capitalize">{pricingLabels[period]}: </span>
+                        <span className="font-semibold capitalize">{pricingLabels[period]}: </span> 
                         <span>{currency}{price}</span>
                     </div>
                 ))}
@@ -389,14 +389,14 @@ const BooleanDetailItem = ({ icon: Icon, label, value }: { icon: React.ElementTy
                     <TableRow key={key}>
                         <TableCell className="font-semibold sticky left-0 bg-card z-10">{fieldLabels[key] || key}</TableCell>
                         {benchmarks.map(b => (
-                            <TableCell key={`${b.id}-${key}`} className="border-l">{key === 'lastUpdated' ? formatDate(b[key]) : renderValue(b[key], key)}</TableCell>
+                            <TableCell key={`${b.id}-${key}`} className="border-l">{key === 'lastUpdated' ? formatDate(b[key] as string) : renderValue(b[key as keyof Benchmark], key)}</TableCell>
                         ))}
                     </TableRow>
                 ))}
             </TableBody>
         </Table>
         </div>
-    )
+    );
   }
 
   return (
@@ -410,11 +410,9 @@ const BooleanDetailItem = ({ icon: Icon, label, value }: { icon: React.ElementTy
                     onCheckedChange={(checked) => {
                        const allIds = benchmarks.map(b => b.id);
                         if (checked) {
-                            const idsToAdd = allIds.filter(id => !selectedBenchmarks.includes(id));
-                            idsToAdd.forEach(id => onSelectBenchmark(id));
+                            allIds.forEach(id => onSelectBenchmark(id, true));
                         } else {
-                            const idsToRemove = allIds.filter(id => selectedBenchmarks.includes(id));
-                            idsToRemove.forEach(id => onSelectBenchmark(id));
+                            allIds.forEach(id => onSelectBenchmark(id, false));
                         }
                     }}
                  />
@@ -443,7 +441,7 @@ const BooleanDetailItem = ({ icon: Icon, label, value }: { icon: React.ElementTy
                 <TableCell>
                     <Checkbox 
                         checked={selectedBenchmarks.includes(b.id)}
-                        onCheckedChange={() => onSelectBenchmark(b.id)}
+                        onCheckedChange={(checked) => onSelectBenchmark(b.id, !!checked)}
                         aria-label={`Select ${getHostname(b.url)}`}
                     />
                 </TableCell>
@@ -528,5 +526,3 @@ const BooleanDetailItem = ({ icon: Icon, label, value }: { icon: React.ElementTy
     </div>
   );
 }
-
-    

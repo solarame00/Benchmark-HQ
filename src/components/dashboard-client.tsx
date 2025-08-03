@@ -570,3 +570,5 @@ export function DashboardClient({ initialBenchmarks, initialMarketCounts }: Dash
     </div>
   );
 }
+
+    
