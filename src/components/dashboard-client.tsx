@@ -3,9 +3,9 @@
 
 import { useState, useEffect, useMemo, Suspense } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
+import dynamic from 'next/dynamic';
 import type { Benchmark, BenchmarkInput } from '@/lib/types';
 import { BenchmarkTable } from '@/components/benchmark-table';
-import { BenchmarkForm } from '@/components/benchmark-form';
 import { BenchmarkCard } from '@/components/benchmark-card';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
@@ -24,6 +24,22 @@ import Link from 'next/link';
 import { Skeleton } from './ui/skeleton';
 import { Checkbox } from './ui/checkbox';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from './ui/alert-dialog';
+
+const BenchmarkForm = dynamic(() => import('@/components/benchmark-form').then(mod => mod.BenchmarkForm), {
+  loading: () => (
+    <Card>
+      <CardHeader>
+        <Skeleton className="h-8 w-1/2" />
+        <Skeleton className="h-4 w-3/4" />
+      </CardHeader>
+      <CardContent className="space-y-4">
+        <Skeleton className="h-10 w-full" />
+        <Skeleton className="h-24 w-full" />
+        <Skeleton className="h-10 w-32" />
+      </CardContent>
+    </Card>
+  ),
+});
 
 
 type Checked = DropdownMenuCheckboxItemProps["checked"];
@@ -255,22 +271,12 @@ export function DashboardClient({ initialBenchmarks, initialMarketCounts }: Dash
   if (showFormParam) {
       return (
         <div className="mx-auto grid max-w-4xl flex-1 auto-rows-max gap-4">
-            <Card>
-                <CardHeader>
-                <CardTitle>{editingBenchmark?.id ? 'Edit Benchmark' : 'Add New Benchmark'}</CardTitle>
-                <CardDescription>
-                    Fill in the details of the competitor website. All fields are optional, except Primary Market.
-                </CardDescription>
-                </CardHeader>
-                <CardContent>
-                    <BenchmarkForm
-                        key={editingBenchmark ? editingBenchmark.id : 'new'}
-                        benchmark={editingBenchmark}
-                        onSave={handleSave}
-                        onCancel={handleCancelForm}
-                    />
-                </CardContent>
-            </Card>
+             <BenchmarkForm
+                key={editingBenchmark ? editingBenchmark.id : 'new'}
+                benchmark={editingBenchmark}
+                onSave={handleSave}
+                onCancel={handleCancelForm}
+            />
         </div>
       );
   }
@@ -372,7 +378,7 @@ export function DashboardClient({ initialBenchmarks, initialMarketCounts }: Dash
             <Button variant="outline" size="icon" onClick={() => handleMarketSelect(null)}>
                 <ArrowLeft className="h-4 w-4" />
             </Button>
-            <h1 className="text-2xl md:text-3xl font-bold tracking-tight truncate">
+            <h1 className="text-xl font-bold tracking-tight md:text-2xl lg:text-3xl">
                 {selectedMarket} Benchmarks
             </h1>
         </div>
