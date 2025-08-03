@@ -59,7 +59,10 @@ export function BenchmarkCard({ benchmark, isSelected, onSelect, onViewDetails, 
                                 <span className="truncate">{getHostname(benchmark.url)}</span>
                             </a>
                         </CardTitle>
-                         <div data-interactive className="absolute top-4 right-2">
+                         <div data-interactive className="absolute top-2 right-2 flex items-center">
+                             <Button variant="ghost" size="icon" className="h-8 w-8 flex-shrink-0" onClick={onViewDetails}>
+                                <Eye className="h-4 w-4" />
+                             </Button>
                             <DropdownMenu>
                                 <DropdownMenuTrigger asChild>
                                     <Button variant="ghost" size="icon" className="h-8 w-8 flex-shrink-0">
@@ -67,9 +70,6 @@ export function BenchmarkCard({ benchmark, isSelected, onSelect, onViewDetails, 
                                     </Button>
                                 </DropdownMenuTrigger>
                                 <DropdownMenuContent align="end">
-                                    <DropdownMenuItem onClick={() => onViewDetails()}>
-                                        <Eye className="mr-2 h-4 w-4" /> View Details
-                                    </DropdownMenuItem>
                                     <DropdownMenuItem onClick={() => onEdit(benchmark)}>
                                         <Edit className="mr-2 h-4 w-4" /> Edit
                                     </DropdownMenuItem>
