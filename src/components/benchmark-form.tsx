@@ -27,8 +27,9 @@ import { Checkbox } from './ui/checkbox';
 import { addBenchmarkWithId, uploadScreenshot } from '@/lib/actions';
 import { useToast } from '@/hooks/use-toast';
 import Image from 'next/image';
-import { Card, CardContent } from './ui/card';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from './ui/card';
 import { v4 as uuidv4 } from 'uuid';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 
 
 const screenshotSchema = z.object({
@@ -76,8 +77,6 @@ export function BenchmarkForm({ benchmark, onSave, onCancel }: BenchmarkFormProp
   const [isSubmitting, setIsSubmitting] = useState(false);
   const { toast } = useToast();
   
-  // Generate a stable, unique ID for the benchmark as soon as the form is used.
-  // This is crucial for creating a stable storage path for file uploads *before* the document is saved.
   const [benchmarkId] = useState(() => benchmark?.id || uuidv4());
 
   const [screenshots, setScreenshots] = useState<Screenshot[]>(benchmark?.screenshots || []);
@@ -129,7 +128,6 @@ export function BenchmarkForm({ benchmark, onSave, onCancel }: BenchmarkFormProp
     }
     setIsUploading(true);
     try {
-      // We use the stable `benchmarkId` here, which is guaranteed to be a valid UUID.
       const downloadURL = await uploadScreenshot(benchmarkId, screenshotFile);
       setScreenshots([...screenshots, { url: downloadURL, label: screenshotLabel }]);
       setScreenshotFile(null);
@@ -172,7 +170,6 @@ export function BenchmarkForm({ benchmark, onSave, onCancel }: BenchmarkFormProp
       screenshots: screenshots,
     };
     
-    // We pass the stable benchmarkId to the onSave handler.
     onSave(dataToSave, benchmarkId);
     setIsSubmitting(false);
   }
@@ -188,351 +185,374 @@ export function BenchmarkForm({ benchmark, onSave, onCancel }: BenchmarkFormProp
         <CardContent>
             <Form {...form}>
               <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
-                <div className="grid gap-6">
-                  <FormField
-                    control={form.control}
-                    name="url"
-                    render={({ field }) => (
-                        <FormItem>
-                        <FormLabel>Website URL</FormLabel>
-                        <FormControl>
-                            <Input placeholder="https://example.com" {...field} />
-                        </FormControl>
-                        <FormMessage />
-                        </FormItem>
-                    )}
-                  />
+                
+                <Tabs defaultValue="general" className="w-full">
+                  <TabsList className="grid w-full grid-cols-3 md:grid-cols-6 mb-4">
+                    <TabsTrigger value="general">General</TabsTrigger>
+                    <TabsTrigger value="pricing">Pricing</TabsTrigger>
+                    <TabsTrigger value="payments">Payments</TabsTrigger>
+                    <TabsTrigger value="features">Features</TabsTrigger>
+                    <TabsTrigger value="attachments">Attachments</TabsTrigger>
+                    <TabsTrigger value="notes">Notes</TabsTrigger>
+                  </TabsList>
 
-                  <div className="grid md:grid-cols-2 gap-6">
-                    <FormField control={form.control} name="score" render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Score Authority</FormLabel>
-                          <FormControl><Input type="number" {...field} value={field.value ?? ''} /></FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                    <FormField control={form.control} name="organicTraffic" render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Traffic</FormLabel>
-                          <FormControl><Input type="number" {...field} value={field.value ?? ''} /></FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                  </div>
+                  <TabsContent value="general" className="space-y-6">
+                     <FormField
+                        control={form.control}
+                        name="url"
+                        render={({ field }) => (
+                            <FormItem>
+                            <FormLabel>Website URL</FormLabel>
+                            <FormControl>
+                                <Input placeholder="https://example.com" {...field} />
+                            </FormControl>
+                            <FormMessage />
+                            </FormItem>
+                        )}
+                      />
 
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                    <FormField control={form.control} name="primaryMarket" render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Primary Market</FormLabel>
-                        <Select onValueChange={field.onChange} value={field.value}>
-                          <FormControl>
-                            <SelectTrigger><SelectValue placeholder="Select a country" /></SelectTrigger>
-                          </FormControl>
-                          <SelectContent position="item-aligned">
-                            {COUNTRIES.map(c => <SelectItem key={c} value={c}>{c}</SelectItem>)}
-                          </SelectContent>
-                        </Select>
-                        <FormMessage />
-                      </FormItem>
-                    )} />
-                    <FormField control={form.control} name="secondaryMarket" render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Secondary Market</FormLabel>
-                        <Select onValueChange={field.onChange} value={field.value}>
-                          <FormControl>
-                            <SelectTrigger><SelectValue placeholder="Optional" /></SelectTrigger>
-                          </FormControl>
-                          <SelectContent position="item-aligned">
-                            {COUNTRIES.map(c => <SelectItem key={c} value={c}>{c}</SelectItem>)}
-                          </SelectContent>
-                        </Select>
-                        <FormMessage />
-                      </FormItem>
-                    )} />
-                     <FormField control={form.control} name="tertiaryMarket" render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Tertiary Market</FormLabel>
-                        <Select onValueChange={field.onChange} value={field.value}>
-                          <FormControl>
-                            <SelectTrigger><SelectValue placeholder="Optional" /></SelectTrigger>
-                          </FormControl>
-                          <SelectContent position="item-aligned">
-                            {COUNTRIES.map(c => <SelectItem key={c} value={c}>{c}</SelectItem>)}
-                          </SelectContent>
-                        </Select>
-                        <FormMessage />
-                      </FormItem>
-                    )} />
-                  </div>
+                      <div className="grid md:grid-cols-2 gap-6">
+                        <FormField control={form.control} name="score" render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>Score Authority</FormLabel>
+                              <FormControl><Input type="number" {...field} value={field.value ?? ''} /></FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                        <FormField control={form.control} name="organicTraffic" render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>Traffic</FormLabel>
+                              <FormControl><Input type="number" {...field} value={field.value ?? ''} /></FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                      </div>
+
+                      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                        <FormField control={form.control} name="primaryMarket" render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Primary Market</FormLabel>
+                            <Select onValueChange={field.onChange} value={field.value}>
+                              <FormControl>
+                                <SelectTrigger><SelectValue placeholder="Select a country" /></SelectTrigger>
+                              </FormControl>
+                              <SelectContent position="item-aligned">
+                                {COUNTRIES.map(c => <SelectItem key={c} value={c}>{c}</SelectItem>)}
+                              </SelectContent>
+                            </Select>
+                            <FormMessage />
+                          </FormItem>
+                        )} />
+                        <FormField control={form.control} name="secondaryMarket" render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Secondary Market</FormLabel>
+                            <Select onValueChange={field.onChange} value={field.value}>
+                              <FormControl>
+                                <SelectTrigger><SelectValue placeholder="Optional" /></SelectTrigger>
+                              </FormControl>
+                              <SelectContent position="item-aligned">
+                                {COUNTRIES.map(c => <SelectItem key={c} value={c}>{c}</SelectItem>)}
+                              </SelectContent>
+                            </Select>
+                            <FormMessage />
+                          </FormItem>
+                        )} />
+                         <FormField control={form.control} name="tertiaryMarket" render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Tertiary Market</FormLabel>
+                            <Select onValueChange={field.onChange} value={field.value}>
+                              <FormControl>
+                                <SelectTrigger><SelectValue placeholder="Optional" /></SelectTrigger>
+                              </FormControl>
+                              <SelectContent position="item-aligned">
+                                {COUNTRIES.map(c => <SelectItem key={c} value={c}>{c}</SelectItem>)}
+                              </SelectContent>
+                            </Select>
+                            <FormMessage />
+                          </FormItem>
+                        )} />
+                      </div>
+                      <div className="grid md:grid-cols-2 gap-6">
+                        <FormField control={form.control} name="startTimeline" render={({ field }) => (
+                            <FormItem><FormLabel>Start Timeline</FormLabel><FormControl><Input placeholder="e.g., Q2 2022" {...field} /></FormControl><FormMessage /></FormItem>
+                          )}
+                        />
+                         <FormField control={form.control} name="connections" render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>Connections</FormLabel>
+                              <Select onValueChange={field.onChange} value={field.value}>
+                                <FormControl>
+                                  <SelectTrigger><SelectValue placeholder="Select number of connections" /></SelectTrigger>
+                                </FormControl>
+                                <SelectContent>
+                                  {CONNECTION_OPTIONS.map(c => <SelectItem key={c} value={c}>{c}</SelectItem>)}
+                                </SelectContent>
+                              </Select>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                      </div>
+                  </TabsContent>
                   
-                   <div className="grid gap-4 rounded-lg border p-4">
-                    <h3 className="font-semibold">Pricing Details</h3>
-                     <FormField control={form.control} name="pricing.currency" render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Currency</FormLabel>
-                           <Select onValueChange={field.onChange} value={field.value}>
-                            <FormControl>
-                              <SelectTrigger><SelectValue placeholder="Select currency" /></SelectTrigger>
-                            </FormControl>
-                            <SelectContent>
-                              {CURRENCIES.map(c => <SelectItem key={c} value={c}>{c}</SelectItem>)}
-                            </SelectContent>
-                          </Select>
-                          <FormMessage />
-                        </FormItem>
-                      )} />
-                     <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                        <FormField control={form.control} name="pricing.oneMonth" render={({ field }) => (
-                          <FormItem><FormLabel>1 Month Price</FormLabel><FormControl><Input type="number" placeholder="e.g. 19" {...field} /></FormControl><FormMessage /></FormItem>
+                  <TabsContent value="pricing" className="space-y-6">
+                    <div className="grid gap-4 rounded-lg border p-4">
+                      <h3 className="font-semibold">Pricing Details</h3>
+                       <FormField control={form.control} name="pricing.currency" render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Currency</FormLabel>
+                             <Select onValueChange={field.onChange} value={field.value}>
+                              <FormControl>
+                                <SelectTrigger><SelectValue placeholder="Select currency" /></SelectTrigger>
+                              </FormControl>
+                              <SelectContent>
+                                {CURRENCIES.map(c => <SelectItem key={c} value={c}>{c}</SelectItem>)}
+                              </SelectContent>
+                            </Select>
+                            <FormMessage />
+                          </FormItem>
                         )} />
-                        <FormField control={form.control} name="pricing.threeMonths" render={({ field }) => (
-                          <FormItem><FormLabel>3 Months Price</FormLabel><FormControl><Input type="number" placeholder="e.g. 49" {...field} /></FormControl><FormMessage /></FormItem>
-                        )} />
-                        <FormField control={form.control} name="pricing.sixMonths" render={({ field }) => (
-                          <FormItem><FormLabel>6 Months Price</FormLabel><FormControl><Input type="number" placeholder="e.g. 89" {...field} /></FormControl><FormMessage /></FormItem>
-                        )} />
-                        <FormField control={form.control} name="pricing.twelveMonths" render={({ field }) => (
-                          <FormItem><FormLabel>12 Months Price</FormLabel><FormControl><Input type="number" placeholder="e.g. 159" {...field} /></FormControl><FormMessage /></FormItem>
-                        )} />
-                        <FormField control={form.control} name="pricing.twoYear" render={({ field }) => (
-                          <FormItem><FormLabel>2 Year Price</FormLabel><FormControl><Input type="number" placeholder="e.g. 299" {...field} /></FormControl><FormMessage /></FormItem>
-                        )} />
-                        <FormField control={form.control} name="pricing.lifetime" render={({ field }) => (
-                          <FormItem><FormLabel>Lifetime Price</FormLabel><FormControl><Input type="number" placeholder="e.g. 499" {...field} /></FormControl><FormMessage /></FormItem>
-                        )} />
-                     </div>
-                  </div>
-
-                  <div className="grid gap-4 rounded-lg border p-4">
-                    <h3 className="font-semibold">Payment Details</h3>
-                    <FormField
-                      control={form.control}
-                      name="paymentStrategy"
-                      render={({ field }) => (
-                        <FormItem className="space-y-3">
-                          <FormLabel>Payment Strategy</FormLabel>
-                          <FormControl>
-                            <RadioGroup
-                              onValueChange={field.onChange}
-                              value={field.value}
-                              className="flex flex-col space-y-1"
-                            >
-                              {PAYMENT_STRATEGIES.map((strategy) => (
-                                 <FormItem key={strategy} className="flex items-center space-x-3 space-y-0">
-                                  <FormControl>
-                                    <RadioGroupItem value={strategy} />
-                                  </FormControl>
-                                  <FormLabel className="font-normal">{strategy}</FormLabel>
-                                </FormItem>
-                              ))}
-                            </RadioGroup>
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                    <FormField
-                      control={form.control}
-                      name="paymentMethods"
-                      render={() => (
-                        <FormItem>
-                          <div className="mb-4">
-                            <FormLabel>Payment Methods Offered</FormLabel>
-                          </div>
-                          <div className="grid md:grid-cols-2 gap-4">
-                            {PAYMENT_METHODS.map((item) => (
-                              <FormField
-                                key={item}
-                                control={form.control}
-                                name="paymentMethods"
-                                render={({ field }) => {
-                                  return (
-                                    <FormItem key={item} className="flex flex-row items-start space-x-3 space-y-0">
-                                      <FormControl>
-                                        <Checkbox
-                                          checked={field.value?.includes(item)}
-                                          onCheckedChange={(checked) => {
-                                            return checked
-                                              ? field.onChange([...(field.value || []), item])
-                                              : field.onChange(
-                                                  field.value?.filter(
-                                                    (value) => value !== item
-                                                  )
-                                                )
-                                          }}
-                                        />
-                                      </FormControl>
-                                      <FormLabel className="font-normal">{item}</FormLabel>
-                                    </FormItem>
-                                  )
-                                }}
-                              />
-                            ))}
-                          </div>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                     <FormField control={form.control} name="paymentRedirect" render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Payment Redirect URL</FormLabel>
-                        <FormControl><Input placeholder="https://checkout.example.com" {...field} /></FormControl>
-                        <FormDescription>Required if strategy is 'Redirect Payment'.</FormDescription>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                  </div>
-                  
-                   <div className="grid gap-4 rounded-lg border p-4">
-                    <h3 className="font-semibold">Screenshots & Documents</h3>
-                    <div className="grid md:grid-cols-2 gap-4">
-                        <FormItem>
-                            <FormLabel>Attachment Label</FormLabel>
-                            <FormControl>
-                                <Input 
-                                    placeholder="e.g., Checkout Page, Pricing PDF" 
-                                    value={screenshotLabel} 
-                                    onChange={(e) => setScreenshotLabel(e.target.value)}
-                                />
-                            </FormControl>
-                        </FormItem>
-                        <FormItem>
-                            <FormLabel>File (Image or PDF)</FormLabel>
-                            <FormControl>
-                                <Input 
-                                    type="file" 
-                                    accept="image/*,application/pdf"
-                                    onChange={(e) => setScreenshotFile(e.target.files ? e.target.files[0] : null)}
-                                />
-                            </FormControl>
-                        </FormItem>
+                       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                          <FormField control={form.control} name="pricing.oneMonth" render={({ field }) => (
+                            <FormItem><FormLabel>1 Month Price</FormLabel><FormControl><Input type="number" placeholder="e.g. 19" {...field} /></FormControl><FormMessage /></FormItem>
+                          )} />
+                          <FormField control={form.control} name="pricing.threeMonths" render={({ field }) => (
+                            <FormItem><FormLabel>3 Months Price</FormLabel><FormControl><Input type="number" placeholder="e.g. 49" {...field} /></FormControl><FormMessage /></FormItem>
+                          )} />
+                          <FormField control={form.control} name="pricing.sixMonths" render={({ field }) => (
+                            <FormItem><FormLabel>6 Months Price</FormLabel><FormControl><Input type="number" placeholder="e.g. 89" {...field} /></FormControl><FormMessage /></FormItem>
+                          )} />
+                          <FormField control={form.control} name="pricing.twelveMonths" render={({ field }) => (
+                            <FormItem><FormLabel>12 Months Price</FormLabel><FormControl><Input type="number" placeholder="e.g. 159" {...field} /></FormControl><FormMessage /></FormItem>
+                          )} />
+                          <FormField control={form.control} name="pricing.twoYear" render={({ field }) => (
+                            <FormItem><FormLabel>2 Year Price</FormLabel><FormControl><Input type="number" placeholder="e.g. 299" {...field} /></FormControl><FormMessage /></FormItem>
+                          )} />
+                          <FormField control={form.control} name="pricing.lifetime" render={({ field }) => (
+                            <FormItem><FormLabel>Lifetime Price</FormLabel><FormControl><Input type="number" placeholder="e.g. 499" {...field} /></FormControl><FormMessage /></FormItem>
+                          )} />
+                       </div>
                     </div>
-                    <Button type="button" onClick={handleAddScreenshot} disabled={isUploading} className="w-fit">
-                        {isUploading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <UploadCloud className="mr-2 h-4 w-4" />}
-                        Add Attachment
-                    </Button>
-                    {screenshots.length > 0 && (
-                        <div className="space-y-4">
-                            <h4 className="font-medium">Uploaded Attachments</h4>
-                            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-                                {screenshots.map((ss, index) => (
-                                    <Card key={index} className="relative group">
-                                        {ss.url.toLowerCase().includes('.pdf') ? (
-                                            <div className="flex flex-col items-center justify-center h-full aspect-square bg-muted rounded-md p-4">
-                                                <FileText className="w-10 h-10 text-destructive" />
-                                            </div>
-                                        ) : (
-                                            <Image 
-                                                src={ss.url} 
-                                                alt={ss.label} 
-                                                width={150} 
-                                                height={150} 
-                                                className="object-cover rounded-md aspect-square"
-                                                data-ai-hint="screenshot website"
-                                            />
-                                        )}
-                                        <div className="absolute inset-0 bg-black/50 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
-                                            <Button 
-                                                type="button" 
-                                                variant="destructive" 
-                                                size="icon"
-                                                onClick={() => handleRemoveScreenshot(index)}>
-                                                <Trash2 className="h-4 w-4" />
-                                            </Button>
-                                        </div>
-                                        <p className="text-xs text-center p-1 truncate">{ss.label}</p>
-                                    </Card>
+                  </TabsContent>
+
+                  <TabsContent value="payments" className="space-y-6">
+                    <div className="grid gap-4 rounded-lg border p-4">
+                      <h3 className="font-semibold">Payment Details</h3>
+                      <FormField
+                        control={form.control}
+                        name="paymentStrategy"
+                        render={({ field }) => (
+                          <FormItem className="space-y-3">
+                            <FormLabel>Payment Strategy</FormLabel>
+                            <FormControl>
+                              <RadioGroup
+                                onValueChange={field.onChange}
+                                value={field.value}
+                                className="flex flex-col space-y-1"
+                              >
+                                {PAYMENT_STRATEGIES.map((strategy) => (
+                                   <FormItem key={strategy} className="flex items-center space-x-3 space-y-0">
+                                    <FormControl>
+                                      <RadioGroupItem value={strategy} />
+                                    </FormControl>
+                                    <FormLabel className="font-normal">{strategy}</FormLabel>
+                                  </FormItem>
                                 ))}
+                              </RadioGroup>
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                      <FormField
+                        control={form.control}
+                        name="paymentMethods"
+                        render={() => (
+                          <FormItem>
+                            <div className="mb-4">
+                              <FormLabel>Payment Methods Offered</FormLabel>
                             </div>
-                        </div>
-                    )}
-                    <FormField
-                      control={form.control}
-                      name="screenshots"
-                      render={({ field }) => (
-                        <FormItem className="hidden">
-                            <FormControl>
-                                <Input {...field} />
-                            </FormControl>
-                        </FormItem>
-                      )}
-                    />
-                  </div>
-
-                  <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-4">
-                    <FormField control={form.control} name="offerTrial" render={({ field }) => (
-                        <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
-                          <div className="space-y-0.5"><FormLabel>Offers Trial</FormLabel></div>
-                          <FormControl><Switch checked={field.value} onCheckedChange={field.onChange} /></FormControl>
-                        </FormItem>
-                      )}
-                    />
-                    <FormField control={form.control} name="hasBlog" render={({ field }) => (
-                        <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
-                          <div className="space-y-0.5"><FormLabel>Has Blog</FormLabel></div>
-                          <FormControl><Switch checked={field.value} onCheckedChange={field.onChange} /></FormControl>
-                        </FormItem>
-                      )}
-                    />
-                    <FormField control={form.control} name="hasResellPanel" render={({ field }) => (
-                        <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
-                          <div className="space-y-0.5"><FormLabel>Has Resell Panel</FormLabel></div>
-                          <FormControl><Switch checked={field.value} onCheckedChange={field.onChange} /></FormControl>
-                        </FormItem>
-                      )}
-                    />
-                     <FormField control={form.control} name="requiresAccount" render={({ field }) => (
-                        <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
-                          <div className="space-y-0.5"><FormLabel>Requires Account</FormLabel></div>
-                          <FormControl><Switch checked={field.value} onCheckedChange={field.onChange} /></FormControl>
-                        </FormItem>
-                      )}
-                    />
-                  </div>
-
-                  <div className="grid md:grid-cols-2 gap-6">
-                    <FormField control={form.control} name="startTimeline" render={({ field }) => (
-                        <FormItem><FormLabel>Start Timeline</FormLabel><FormControl><Input placeholder="e.g., Q2 2022" {...field} /></FormControl><FormMessage /></FormItem>
-                      )}
-                    />
-                     <FormField control={form.control} name="connections" render={({ field }) => (
+                            <div className="grid md:grid-cols-2 gap-4">
+                              {PAYMENT_METHODS.map((item) => (
+                                <FormField
+                                  key={item}
+                                  control={form.control}
+                                  name="paymentMethods"
+                                  render={({ field }) => {
+                                    return (
+                                      <FormItem key={item} className="flex flex-row items-start space-x-3 space-y-0">
+                                        <FormControl>
+                                          <Checkbox
+                                            checked={field.value?.includes(item)}
+                                            onCheckedChange={(checked) => {
+                                              return checked
+                                                ? field.onChange([...(field.value || []), item])
+                                                : field.onChange(
+                                                    field.value?.filter(
+                                                      (value) => value !== item
+                                                    )
+                                                  )
+                                            }}
+                                          />
+                                        </FormControl>
+                                        <FormLabel className="font-normal">{item}</FormLabel>
+                                      </FormItem>
+                                    )
+                                  }}
+                                />
+                              ))}
+                            </div>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                       <FormField control={form.control} name="paymentRedirect" render={({ field }) => (
                         <FormItem>
-                          <FormLabel>Connections</FormLabel>
-                          <Select onValueChange={field.onChange} value={field.value}>
-                            <FormControl>
-                              <SelectTrigger><SelectValue placeholder="Select number of connections" /></SelectTrigger>
-                            </FormControl>
-                            <SelectContent>
-                              {CONNECTION_OPTIONS.map(c => <SelectItem key={c} value={c}>{c}</SelectItem>)}
-                            </SelectContent>
-                          </Select>
+                          <FormLabel>Payment Redirect URL</FormLabel>
+                          <FormControl><Input placeholder="https://checkout.example.com" {...field} /></FormControl>
+                          <FormDescription>Required if strategy is 'Redirect Payment'.</FormDescription>
                           <FormMessage />
                         </FormItem>
                       )}
                     />
-                  </div>
+                    </div>
+                  </TabsContent>
 
-                  <FormField control={form.control} name="notes" render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Notes</FormLabel>
-                        <FormControl><Textarea placeholder="Any observations..." className="min-h-24" {...field} /></FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                  <FormField control={form.control} name="tags" render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Keywords</FormLabel>
-                        <FormControl><Input placeholder="IPTV, Sports, VOD" {...field} /></FormControl>
-                        <FormDescription>Comma-separated keywords (e.g., IPTV, Sports, VOD).</FormDescription>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                </div>
+                  <TabsContent value="features" className="space-y-6">
+                    <div className="grid md:grid-cols-2 lg:grid-cols-2 gap-4 rounded-lg border p-4">
+                      <FormField control={form.control} name="offerTrial" render={({ field }) => (
+                          <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
+                            <div className="space-y-0.5"><FormLabel>Offers Trial</FormLabel></div>
+                            <FormControl><Switch checked={field.value} onCheckedChange={field.onChange} /></FormControl>
+                          </FormItem>
+                        )}
+                      />
+                      <FormField control={form.control} name="hasBlog" render={({ field }) => (
+                          <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
+                            <div className="space-y-0.5"><FormLabel>Has Blog</FormLabel></div>
+                            <FormControl><Switch checked={field.value} onCheckedChange={field.onChange} /></FormControl>
+                          </FormItem>
+                        )}
+                      />
+                      <FormField control={form.control} name="hasResellPanel" render={({ field }) => (
+                          <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
+                            <div className="space-y-0.5"><FormLabel>Has Resell Panel</FormLabel></div>
+                            <FormControl><Switch checked={field.value} onCheckedChange={field.onChange} /></FormControl>
+                          </FormItem>
+                        )}
+                      />
+                       <FormField control={form.control} name="requiresAccount" render={({ field }) => (
+                          <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
+                            <div className="space-y-0.5"><FormLabel>Requires Account</FormLabel></div>
+                            <FormControl><Switch checked={field.value} onCheckedChange={field.onChange} /></FormControl>
+                          </FormItem>
+                        )}
+                      />
+                    </div>
+                  </TabsContent>
+                  
+                  <TabsContent value="attachments" className="space-y-6">
+                     <div className="grid gap-4 rounded-lg border p-4">
+                      <h3 className="font-semibold">Screenshots & Documents</h3>
+                      <div className="grid md:grid-cols-2 gap-4">
+                          <FormItem>
+                              <FormLabel>Attachment Label</FormLabel>
+                              <FormControl>
+                                  <Input 
+                                      placeholder="e.g., Checkout Page, Pricing PDF" 
+                                      value={screenshotLabel} 
+                                      onChange={(e) => setScreenshotLabel(e.target.value)}
+                                  />
+                              </FormControl>
+                          </FormItem>
+                          <FormItem>
+                              <FormLabel>File (Image or PDF)</FormLabel>
+                              <FormControl>
+                                  <Input 
+                                      type="file" 
+                                      accept="image/*,application/pdf"
+                                      onChange={(e) => setScreenshotFile(e.target.files ? e.target.files[0] : null)}
+                                  />
+                              </FormControl>
+                          </FormItem>
+                      </div>
+                      <Button type="button" onClick={handleAddScreenshot} disabled={isUploading} className="w-fit">
+                          {isUploading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <UploadCloud className="mr-2 h-4 w-4" />}
+                          Add Attachment
+                      </Button>
+                      {screenshots.length > 0 && (
+                          <div className="space-y-4">
+                              <h4 className="font-medium">Uploaded Attachments</h4>
+                              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+                                  {screenshots.map((ss, index) => (
+                                      <Card key={index} className="relative group">
+                                          {ss.url.toLowerCase().includes('.pdf') ? (
+                                              <div className="flex flex-col items-center justify-center h-full aspect-square bg-muted rounded-md p-4">
+                                                  <FileText className="w-10 h-10 text-destructive" />
+                                              </div>
+                                          ) : (
+                                              <Image 
+                                                  src={ss.url} 
+                                                  alt={ss.label} 
+                                                  width={150} 
+                                                  height={150} 
+                                                  className="object-cover rounded-md aspect-square"
+                                                  data-ai-hint="screenshot website"
+                                              />
+                                          )}
+                                          <div className="absolute inset-0 bg-black/50 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                                              <Button 
+                                                  type="button" 
+                                                  variant="destructive" 
+                                                  size="icon"
+                                                  onClick={() => handleRemoveScreenshot(index)}>
+                                                  <Trash2 className="h-4 w-4" />
+                                              </Button>
+                                          </div>
+                                          <p className="text-xs text-center p-1 truncate">{ss.label}</p>
+                                      </Card>
+                                  ))}
+                              </div>
+                          </div>
+                      )}
+                      <FormField
+                        control={form.control}
+                        name="screenshots"
+                        render={({ field }) => (
+                          <FormItem className="hidden">
+                              <FormControl>
+                                  <Input {...field} />
+                              </FormControl>
+                          </FormItem>
+                        )}
+                      />
+                    </div>
+                  </TabsContent>
+                  
+                  <TabsContent value="notes" className="space-y-6">
+                    <FormField control={form.control} name="notes" render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Notes</FormLabel>
+                          <FormControl><Textarea placeholder="Any observations..." className="min-h-24" {...field} /></FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    <FormField control={form.control} name="tags" render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Keywords</FormLabel>
+                          <FormControl><Input placeholder="IPTV, Sports, VOD" {...field} /></FormControl>
+                          <FormDescription>Comma-separated keywords (e.g., IPTV, Sports, VOD).</FormDescription>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  </TabsContent>
+                </Tabs>
+
+
                 <div className="flex gap-2">
                     <Button type="submit" disabled={isSubmitting}>
                     {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
