@@ -7,14 +7,14 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
-import { CheckCircle, MoreVertical, Globe, Edit, Trash2, XCircle, Copy, Eye } from 'lucide-react';
+import { CheckCircle, MoreVertical, Globe, Edit, Trash2, XCircle, Copy } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import Image from 'next/image';
+import { Checkbox } from './ui/checkbox';
 
 type BenchmarkCardProps = {
     benchmark: Benchmark;
     isSelected: boolean;
-    onSelect: () => void;
+    onSelect: (checked: boolean) => void;
     onViewDetails: () => void;
     onEdit: (benchmark: Benchmark) => void;
     onClone: (benchmark: Benchmark) => void;
@@ -40,7 +40,7 @@ export function BenchmarkCard({ benchmark, isSelected, onSelect, onViewDetails, 
         if ((e.target as HTMLElement).closest('[data-interactive]')) {
             return;
         }
-        onSelect();
+        onViewDetails();
     }
 
     return (
@@ -54,16 +54,21 @@ export function BenchmarkCard({ benchmark, isSelected, onSelect, onViewDetails, 
             >
                 <CardHeader>
                     <div className="flex justify-between items-start gap-2">
-                         <CardTitle className="text-lg leading-tight flex-grow pr-2">
+                         <div className="absolute top-2 left-2 z-10" data-interactive>
+                            <Checkbox 
+                                checked={isSelected} 
+                                onCheckedChange={(checked) => onSelect(checked as boolean)}
+                                aria-label="Select benchmark"
+                                className="bg-background/80"
+                            />
+                        </div>
+                         <CardTitle className="text-lg leading-tight flex-grow pr-8 pl-8">
                              <a href={benchmark.url} target="_blank" rel="noopener noreferrer" className="hover:underline flex items-center gap-2" data-interactive>
                                 <Globe className="h-4 w-4 text-muted-foreground flex-shrink-0" />
                                 <span className="truncate">{getHostname(benchmark.url)}</span>
                             </a>
                         </CardTitle>
-                         <div data-interactive className="flex items-center flex-shrink-0">
-                             <Button variant="ghost" size="icon" className="h-8 w-8" onClick={onViewDetails}>
-                                <Eye className="h-4 w-4" />
-                             </Button>
+                         <div data-interactive className="absolute top-2 right-2 z-10">
                             <DropdownMenu>
                                 <DropdownMenuTrigger asChild>
                                     <Button variant="ghost" size="icon" className="h-8 w-8">
@@ -86,7 +91,7 @@ export function BenchmarkCard({ benchmark, isSelected, onSelect, onViewDetails, 
                             </DropdownMenu>
                         </div>
                     </div>
-                    <CardDescription>
+                    <CardDescription className="pt-2">
                         <Badge variant={benchmark.score > 7 ? 'default' : benchmark.score > 4 ? 'secondary' : 'destructive'} className="text-base">
                             Score: {benchmark.score || 0}
                         </Badge>
@@ -137,3 +142,5 @@ export function BenchmarkCard({ benchmark, isSelected, onSelect, onViewDetails, 
         </AlertDialog>
     );
 }
+
+    

@@ -176,12 +176,9 @@ function DashboardContent() {
     );
   };
   
-  const handleSelectBenchmark = (id: string) => {
-    // When form is open, clicking on cards should not be possible
-    if(showFormParam) return;
-
+  const handleSelectBenchmark = (id: string, checked: boolean) => {
     setSelectedBenchmarks(prev => 
-        prev.includes(id) ? prev.filter(item => item !== id) : [...prev, id]
+        checked ? [...prev, id] : prev.filter(item => item !== id)
     );
   };
 
@@ -250,6 +247,7 @@ function DashboardContent() {
   }, [benchmarks]);
 
   const handleViewDetails = (benchmark: Benchmark) => {
+    if (showFormParam) return;
     setViewingBenchmark(benchmark);
   }
 
@@ -345,7 +343,7 @@ function DashboardContent() {
                                     key={b.id}
                                     benchmark={b}
                                     isSelected={selectedBenchmarks.includes(b.id)}
-                                    onSelect={() => handleSelectBenchmark(b.id)}
+                                    onSelect={(checked) => handleSelectBenchmark(b.id, checked)}
                                     onViewDetails={() => handleViewDetails(b)}
                                     onEdit={() => handleEdit(b)}
                                     onClone={() => handleClone(b)}
@@ -523,7 +521,7 @@ function DashboardContent() {
                     key={b.id}
                     benchmark={b}
                     isSelected={selectedBenchmarks.includes(b.id)}
-                    onSelect={() => handleSelectBenchmark(b.id)}
+                    onSelect={(checked) => handleSelectBenchmark(b.id, checked)}
                     onViewDetails={() => handleViewDetails(b)}
                     onEdit={() => handleEdit(b)}
                     onClone={() => handleClone(b)}
@@ -559,7 +557,7 @@ function DashboardContent() {
             onClone={handleClone}
             onDelete={handleDelete}
             selectedBenchmarks={selectedBenchmarks}
-            onSelectBenchmark={handleSelectBenchmark}
+            onSelectBenchmark={(id) => handleSelectBenchmark(id, !selectedBenchmarks.includes(id))}
         />
       )}
 
@@ -591,5 +589,7 @@ export default function DashboardPage() {
         </Suspense>
     )
 }
+
+    
 
     

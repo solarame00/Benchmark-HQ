@@ -406,15 +406,16 @@ const BooleanDetailItem = ({ icon: Icon, label, value }: { icon: React.ElementTy
           <TableRow>
             <TableHead className="w-12">
                  <Checkbox 
-                    checked={selectedBenchmarks.length > 0 && selectedBenchmarks.length === benchmarks.length}
+                    checked={benchmarks.length > 0 && selectedBenchmarks.length === benchmarks.length}
                     onCheckedChange={(checked) => {
-                        benchmarks.forEach(b => {
-                           if (checked && !selectedBenchmarks.includes(b.id)) {
-                               onSelectBenchmark(b.id);
-                           } else if (!checked && selectedBenchmarks.includes(b.id)) {
-                               onSelectBenchmark(b.id);
-                           }
-                        })
+                       const allIds = benchmarks.map(b => b.id);
+                        if (checked) {
+                            const idsToAdd = allIds.filter(id => !selectedBenchmarks.includes(id));
+                            idsToAdd.forEach(id => onSelectBenchmark(id));
+                        } else {
+                            const idsToRemove = allIds.filter(id => selectedBenchmarks.includes(id));
+                            idsToRemove.forEach(id => onSelectBenchmark(id));
+                        }
                     }}
                  />
             </TableHead>
@@ -527,3 +528,5 @@ const BooleanDetailItem = ({ icon: Icon, label, value }: { icon: React.ElementTy
     </div>
   );
 }
+
+    
