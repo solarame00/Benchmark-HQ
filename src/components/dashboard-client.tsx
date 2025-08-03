@@ -367,12 +367,12 @@ export function DashboardClient({ initialBenchmarks, initialMarketCounts }: Dash
 
   return (
     <div className="flex flex-col gap-4">
-      <div className="flex items-center justify-between gap-4 flex-wrap">
+      <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-2">
         <div className="flex items-center gap-3">
             <Button variant="outline" size="icon" onClick={() => handleMarketSelect(null)}>
                 <ArrowLeft className="h-4 w-4" />
             </Button>
-            <h1 className="text-3xl font-bold tracking-tight">
+            <h1 className="text-2xl md:text-3xl font-bold tracking-tight truncate">
                 {selectedMarket} Benchmarks
             </h1>
         </div>
