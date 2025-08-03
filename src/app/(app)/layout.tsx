@@ -6,12 +6,22 @@ import { SidebarProvider, Sidebar, SidebarTrigger, SidebarHeader, SidebarContent
 import Link from 'next/link';
 import { Home, PlusSquare, BarChart2 } from 'lucide-react';
 import { AppLogo } from '@/components/icons';
-import { usePathname, useRouter } from 'next/navigation';
+import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 
 
 export default function AppLayout({ children }: { children: React.ReactNode }) {
   const router = useRouter();
   const pathname = usePathname();
+  const searchParams = useSearchParams();
+
+  const handleAddNewClick = (e: React.MouseEvent<HTMLAnchorElement>) => {
+    e.preventDefault();
+    const current = new URL(window.location.href);
+    current.searchParams.set('showForm', 'true');
+    router.push(current.toString(), { scroll: false });
+  }
+
+  const isAddActive = searchParams.get('showForm') === 'true';
 
   return (
     <SidebarProvider>
@@ -25,7 +35,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
             <SidebarContent>
                 <SidebarMenu>
                     <SidebarMenuItem>
-                        <SidebarMenuButton asChild tooltip="All Benchmarks" isActive={pathname === '/'}>
+                        <SidebarMenuButton asChild tooltip="All Benchmarks" isActive={pathname === '/' && !isAddActive}>
                              <Link href="/">
                                 <Home />
                                 <span>All Benchmarks</span>
@@ -33,11 +43,11 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
                         </SidebarMenuButton>
                     </SidebarMenuItem>
                     <SidebarMenuItem>
-                        <SidebarMenuButton asChild tooltip="Add New" isActive={pathname === '/add'}>
-                            <Link href="/?showForm=true" scroll={false}>
+                        <SidebarMenuButton asChild tooltip="Add New" isActive={isAddActive}>
+                            <a href="#" onClick={handleAddNewClick}>
                                 <PlusSquare />
                                 <span>Add New</span>
-                            </Link>
+                            </a>
                         </SidebarMenuButton>
                     </SidebarMenuItem>
                      <SidebarMenuItem>
