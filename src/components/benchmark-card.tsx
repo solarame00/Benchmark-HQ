@@ -54,16 +54,19 @@ export function BenchmarkCard({ benchmark, isSelected, onSelect, onViewDetails, 
             >
                 <CardHeader>
                     <div className="flex justify-between items-start gap-2">
-                        <CardTitle className="text-lg leading-tight flex-grow pr-8">
+                         <CardTitle className="text-lg leading-tight flex-grow pr-2">
                              <a href={benchmark.url} target="_blank" rel="noopener noreferrer" className="hover:underline flex items-center gap-2" data-interactive>
                                 <Globe className="h-4 w-4 text-muted-foreground flex-shrink-0" />
                                 <span className="truncate">{getHostname(benchmark.url)}</span>
                             </a>
                         </CardTitle>
-                         <div data-interactive className="absolute top-2 right-2 flex items-center">
+                         <div data-interactive className="flex items-center flex-shrink-0">
+                             <Button variant="ghost" size="icon" className="h-8 w-8" onClick={onViewDetails}>
+                                <Eye className="h-4 w-4" />
+                             </Button>
                             <DropdownMenu>
                                 <DropdownMenuTrigger asChild>
-                                    <Button variant="ghost" size="icon" className="h-8 w-8 flex-shrink-0">
+                                    <Button variant="ghost" size="icon" className="h-8 w-8">
                                         <MoreVertical className="h-4 w-4" />
                                     </Button>
                                 </DropdownMenuTrigger>
@@ -89,23 +92,7 @@ export function BenchmarkCard({ benchmark, isSelected, onSelect, onViewDetails, 
                         </Badge>
                     </CardDescription>
                 </CardHeader>
-                <CardContent className="flex-grow space-y-2 text-sm">
-                    <div className="relative mb-4">
-                        <div 
-                            className="aspect-video w-full bg-muted rounded-md flex items-center justify-center overflow-hidden"
-                            data-interactive
-                        >
-                             <Image src="https://placehold.co/600x400.png" alt="Website placeholder" width={600} height={400} className="w-full h-full object-cover" data-ai-hint="website abstract"/>
-                        </div>
-                        <div 
-                            className="absolute inset-0 bg-black/60 opacity-0 group-hover/card:opacity-100 transition-opacity duration-300 flex items-center justify-center rounded-md"
-                            onClick={onViewDetails}
-                            data-interactive
-                        >
-                            <Eye className="h-10 w-10 text-white" />
-                        </div>
-                    </div>
-
+                <CardContent className="flex-grow space-y-2 text-sm pt-0">
                     <div className="flex items-center justify-between">
                         <span className="text-muted-foreground">Trial?</span>
                         {benchmark.offerTrial ? (
