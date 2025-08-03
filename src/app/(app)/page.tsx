@@ -1,5 +1,4 @@
 
-
 'use client';
 
 import { useState, useEffect, useMemo, Suspense } from 'react';
@@ -257,6 +256,12 @@ function DashboardContent() {
   const handleSortChange = (value: string) => {
     setSortBy(value as any);
   }
+  
+  const handleClearMarket = () => {
+    setSelectedMarket(null);
+    setSearchTerm('');
+  }
+
 
   if (showFormParam) {
       return (
@@ -281,21 +286,36 @@ function DashboardContent() {
       );
   }
   
+  // This is the new "Market Selection" or "Global Search Results" view.
   if (!selectedMarket) {
      return (
         <div className="flex flex-col gap-6">
             <div className="flex items-center justify-between gap-4 flex-wrap">
-                <h1 className="text-3xl font-bold tracking-tight">Select a Primary Market</h1>
+                 <div className="flex-grow max-w-lg">
+                    <div className="relative">
+                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                        <Input
+                            type="search"
+                            placeholder="Search all benchmarks by URL, notes, or keywords..."
+                            className="w-full pl-9"
+                            value={searchTerm}
+                            onChange={(e) => setSearchTerm(e.target.value)}
+                        />
+                    </div>
+                </div>
                 <Button onClick={handleAddNew}>
                     <PlusCircle className="mr-2 h-4 w-4" />
                     Add New
                 </Button>
             </div>
-            {loading ? (
+            
+            {loading && !searchTerm ? (
                 <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
                     {Array.from({ length: 8 }).map((_, i) => <Card key={i} className="h-32 animate-pulse bg-muted/50" />)}
                 </div>
-            ) : (
+            ) : null}
+
+            {!loading && !searchTerm && (
                 <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5">
                     {marketCounts.map(market => (
                         <Card key={market.name} onClick={() => setSelectedMarket(market.name)} className="cursor-pointer hover:shadow-lg transition-shadow duration-300 hover:ring-2 hover:ring-primary">
@@ -313,6 +333,36 @@ function DashboardContent() {
                     ))}
                 </div>
             )}
+            
+            {/* Global Search Results */}
+            {searchTerm && (
+                <div className="flex flex-col gap-4">
+                     <h2 className="text-2xl font-bold tracking-tight">Global Search Results</h2>
+                    {filteredAndSortedBenchmarks.length > 0 ? (
+                         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+                            {filteredAndSortedBenchmarks.map((b) => (
+                                <BenchmarkCard
+                                    key={b.id}
+                                    benchmark={b}
+                                    isSelected={selectedBenchmarks.includes(b.id)}
+                                    onSelect={() => handleSelectBenchmark(b.id)}
+                                    onViewDetails={() => handleViewDetails(b)}
+                                    onEdit={() => handleEdit(b)}
+                                    onClone={() => handleClone(b)}
+                                    onDelete={() => handleDelete(b.id)}
+                                />
+                            ))}
+                        </div>
+                    ) : (
+                         <Card className="col-span-full text-center py-12">
+                            <CardHeader>
+                                <CardTitle>No Benchmarks Found</CardTitle>
+                                <CardDescription>Your search did not match any benchmarks across all markets.</CardDescription>
+                            </CardHeader>
+                         </Card>
+                    )}
+                </div>
+            )}
         </div>
      );
   }
@@ -322,7 +372,7 @@ function DashboardContent() {
     <div className="flex flex-col gap-4">
       <div className="flex items-center justify-between gap-4 flex-wrap">
         <div className="flex items-center gap-3">
-            <Button variant="outline" size="icon" onClick={() => setSelectedMarket(null)}>
+            <Button variant="outline" size="icon" onClick={handleClearMarket}>
                 <ArrowLeft className="h-4 w-4" />
             </Button>
             <h1 className="text-3xl font-bold tracking-tight">
@@ -541,3 +591,5 @@ export default function DashboardPage() {
         </Suspense>
     )
 }
+
+    
