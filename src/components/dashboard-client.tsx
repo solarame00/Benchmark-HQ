@@ -1,7 +1,7 @@
 
 'use client';
 
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, Suspense } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import type { Benchmark, BenchmarkInput } from '@/lib/types';
 import { BenchmarkTable } from '@/components/benchmark-table';
@@ -9,7 +9,7 @@ import { BenchmarkForm } from '@/components/benchmark-form';
 import { BenchmarkCard } from '@/components/benchmark-card';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
-import { PlusCircle, Search, Table, X, ChevronDown, ArrowRight, ArrowLeft, Globe } from 'lucide-react';
+import { PlusCircle, Search, Table, X, ChevronDown, ArrowRight, ArrowLeft, Globe, Eye, Copy, Trash2, Edit } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
@@ -22,6 +22,9 @@ import { MissingApiKeyAlert } from '@/components/missing-api-key-alert';
 import { addBenchmarkWithId, updateBenchmark, deleteBenchmark } from '@/lib/actions';
 import Link from 'next/link';
 import { Skeleton } from './ui/skeleton';
+import { Checkbox } from './ui/checkbox';
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from './ui/alert-dialog';
+
 
 type Checked = DropdownMenuCheckboxItemProps["checked"];
 
@@ -37,12 +40,11 @@ export function DashboardClient({ initialBenchmarks, initialMarketCounts }: Dash
 
   const [benchmarks, setBenchmarks] = useState<Benchmark[]>(initialBenchmarks);
   const [marketCounts, setMarketCounts] = useState(initialMarketCounts);
-  const [loading, setLoading] = useState(false); // No initial loading, as data comes from server
+  const [loading, setLoading] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const [viewingBenchmark, setViewingBenchmark] = useState<Benchmark | null>(null);
   const [selectedBenchmarks, setSelectedBenchmarks] = useState<string[]>([]);
   
-  // Get initial state from URL search params
   const [selectedMarket, setSelectedMarket] = useState<string | null>(searchParams.get('market'));
   const [globalSearchTerm, setGlobalSearchTerm] = useState('');
 
@@ -192,8 +194,8 @@ export function DashboardClient({ initialBenchmarks, initialMarketCounts }: Dash
     } else if (selectedMarket) {
       sourceData = benchmarks.filter(b => b.primaryMarket === selectedMarket);
     } else {
-        // When no market is selected, and no global search, there's nothing to filter yet.
-        return [];
+        // When no market is selected, and no global search, return the source data for the market selection view
+        return sourceData;
     }
     
     let filtered = sourceData.filter((b) => {
@@ -273,7 +275,6 @@ export function DashboardClient({ initialBenchmarks, initialMarketCounts }: Dash
       );
   }
   
-  // This is the "Market Selection" or "Global Search Results" view.
   if (!selectedMarket) {
      return (
         <div className="flex flex-col gap-6">
@@ -296,9 +297,19 @@ export function DashboardClient({ initialBenchmarks, initialMarketCounts }: Dash
                 </Button>
             </div>
             
-            {loading && !globalSearchTerm ? (
-                <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-                    {Array.from({ length: 8 }).map((_, i) => <Card key={i} className="h-32 animate-pulse bg-muted/50" />)}
+            {loading ? (
+                <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5">
+                    {Array.from({ length: 10 }).map((_, i) => (
+                        <Card key={i}>
+                            <CardHeader>
+                                 <Skeleton className="h-6 w-3/4" />
+                            </CardHeader>
+                            <CardContent className="space-y-2">
+                                <Skeleton className="h-8 w-1/2" />
+                                <Skeleton className="h-4 w-1/3" />
+                            </CardContent>
+                        </Card>
+                    ))}
                 </div>
             ) : null}
 
@@ -321,7 +332,6 @@ export function DashboardClient({ initialBenchmarks, initialMarketCounts }: Dash
                 </div>
             )}
             
-            {/* Global Search Results */}
             {globalSearchTerm && (
                 <div className="flex flex-col gap-4">
                      <h2 className="text-2xl font-bold tracking-tight">Global Search Results</h2>
@@ -525,13 +535,13 @@ export function DashboardClient({ initialBenchmarks, initialMarketCounts }: Dash
             <SheetContent className="w-full sm:max-w-xl md:max-w-2xl overflow-y-auto">
                 <SheetHeader className="mb-6 text-left">
                     <SheetTitle>Benchmark Details</SheetTitle>
-                    <SheetDescription>{viewingBenchmark.url}</SheetDescription>
+                     <a href={viewingBenchmark.url} target="_blank" rel="noopener noreferrer" className="text-sm text-primary hover:underline truncate">{viewingBenchmark.url}</a>
                 </SheetHeader>
                 <BenchmarkTable
                     benchmarks={[viewingBenchmark]}
-                    onEdit={handleEdit}
-                    onClone={handleClone}
-                    onDelete={handleDelete}
+                    onEdit={(b) => { setViewingBenchmark(null); handleEdit(b); }}
+                    onClone={(b) => { setViewingBenchmark(null); handleClone(b); }}
+                    onDelete={(id) => { setViewingBenchmark(null); handleDelete(id); }}
                     isDetailsView={true}
                 />
             </SheetContent>
@@ -546,7 +556,7 @@ export function DashboardClient({ initialBenchmarks, initialMarketCounts }: Dash
             onClone={handleClone}
             onDelete={handleDelete}
             selectedBenchmarks={selectedBenchmarks}
-            onSelectBenchmark={(id) => handleSelectBenchmark(id, !selectedBenchmarks.includes(id))}
+            onSelectBenchmark={handleSelectBenchmark}
         />
       )}
 
@@ -570,5 +580,3 @@ export function DashboardClient({ initialBenchmarks, initialMarketCounts }: Dash
     </div>
   );
 }
-
-    
