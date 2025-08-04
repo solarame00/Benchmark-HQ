@@ -2,12 +2,16 @@
 import { getBenchmarks } from '@/lib/actions';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { StatsCharts } from '@/components/stats-charts';
+import { StatsDashboard } from '@/components/stats-dashboard';
+import { Separator } from '@/components/ui/separator';
 
 export default async function StatsPage() {
   const benchmarks = await getBenchmarks();
 
+  const primaryMarkets = Array.from(new Set(benchmarks.map(b => b.primaryMarket).filter(Boolean))).sort();
+
   return (
-    <div className="flex flex-col gap-4">
+    <div className="flex flex-col gap-8">
         <div className="flex items-center justify-between">
             <h1 className="text-2xl font-bold tracking-tight">Statistics</h1>
         </div>
@@ -21,7 +25,11 @@ export default async function StatsPage() {
                 </CardContent>
             </Card>
         ) : (
-            <StatsCharts benchmarks={benchmarks} />
+            <>
+                <StatsCharts benchmarks={benchmarks} />
+                <Separator />
+                <StatsDashboard benchmarks={benchmarks} primaryMarkets={primaryMarkets} />
+            </>
         )}
     </div>
   );
