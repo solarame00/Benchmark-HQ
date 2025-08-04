@@ -187,7 +187,7 @@ export function BenchmarkForm({ benchmark, onSave, onCancel }: BenchmarkFormProp
               <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
                 
                 <Tabs defaultValue="general" className="w-full">
-                  <TabsList className="grid w-full grid-cols-3 md:grid-cols-6 mb-4">
+                  <TabsList className="w-full justify-start overflow-x-auto overflow-y-hidden md:grid md:grid-cols-6 mb-4">
                     <TabsTrigger value="general">General</TabsTrigger>
                     <TabsTrigger value="pricing">Pricing</TabsTrigger>
                     <TabsTrigger value="payments">Payments</TabsTrigger>
