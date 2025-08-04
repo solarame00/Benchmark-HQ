@@ -38,7 +38,7 @@ export function StatsCharts({ benchmarks }: { benchmarks: Benchmark[] }) {
         'Has Resell Panel': benchmarks.filter(b => b.hasResellPanel).length,
         'Requires Account': benchmarks.filter(b => b.requiresAccount).length
      };
-     return Object.entries(features).map(([name, value]) => ({ name, count: value }));
+     return Object.entries(features).map(([name, count]) => ({ name, count: value }));
   }, [benchmarks]);
   
   const scoreAndTrafficData = useMemo(() => {
@@ -75,25 +75,41 @@ export function StatsCharts({ benchmarks }: { benchmarks: Benchmark[] }) {
 
 
     return (
-      <div className="grid gap-8 md:grid-cols-2 lg:grid-cols-3">
-        <Card className="lg:col-span-3">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+        <Card className="md:col-span-2 lg:col-span-3">
           <CardHeader>
             <CardTitle>Score vs. Organic Traffic</CardTitle>
             <CardDescription>Comparing competitor scores and their monthly organic traffic.</CardDescription>
           </CardHeader>
           <CardContent>
-            <ResponsiveContainer width="100%" height={400}>
-              <BarChart data={scoreAndTrafficData} margin={{ top: 5, right: 20, left: 0, bottom: 80 }}>
-                <CartesianGrid strokeDasharray="3 3" />
-                <XAxis dataKey="name" angle={-45} textAnchor="end" interval={0} />
-                <YAxis yAxisId="left" orientation="left" stroke={PALETTE[0]} />
-                <YAxis yAxisId="right" orientation="right" stroke={PALETTE[1]} />
-                <Tooltip />
-                <Legend verticalAlign="top" />
-                <Bar yAxisId="left" dataKey="Score" fill={PALETTE[0]} />
-                <Bar yAxisId="right" dataKey="Traffic (K)" fill={PALETTE[1]} />
-              </BarChart>
-            </ResponsiveContainer>
+            {/* Desktop View Chart */}
+            <div className="hidden md:block">
+              <ResponsiveContainer width="100%" height={400}>
+                <BarChart data={scoreAndTrafficData} margin={{ top: 5, right: 20, left: 0, bottom: 80 }}>
+                  <CartesianGrid strokeDasharray="3 3" />
+                  <XAxis dataKey="name" angle={-45} textAnchor="end" interval={0} />
+                  <YAxis yAxisId="left" orientation="left" stroke={PALETTE[0]} />
+                  <YAxis yAxisId="right" orientation="right" stroke={PALETTE[1]} />
+                  <Tooltip />
+                  <Legend verticalAlign="top" />
+                  <Bar yAxisId="left" dataKey="Score" fill={PALETTE[0]} />
+                  <Bar yAxisId="right" dataKey="Traffic (K)" fill={PALETTE[1]} />
+                </BarChart>
+              </ResponsiveContainer>
+            </div>
+            {/* Mobile View Chart */}
+            <div className="block md:hidden">
+               <ResponsiveContainer width="100%" height={scoreAndTrafficData.length * 50}>
+                <BarChart data={scoreAndTrafficData} layout="vertical" margin={{ top: 5, right: 20, left: 80, bottom: 5 }}>
+                    <CartesianGrid strokeDasharray="3 3" />
+                    <XAxis type="number" />
+                    <YAxis type="category" dataKey="name" width={80} interval={0}/>
+                    <Tooltip />
+                    <Legend verticalAlign="top" />
+                    <Bar dataKey="Score" fill={PALETTE[0]} />
+                </BarChart>
+             </ResponsiveContainer>
+            </div>
           </CardContent>
         </Card>
 
@@ -155,7 +171,7 @@ export function StatsCharts({ benchmarks }: { benchmarks: Benchmark[] }) {
           </CardContent>
         </Card>
 
-         <Card className="lg:col-span-3">
+         <Card className="md:col-span-2 lg:col-span-3">
           <CardHeader>
             <CardTitle>Payment Method Adoption</CardTitle>
             <CardDescription>Popularity of different payment methods offered.</CardDescription>
