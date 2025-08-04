@@ -2,8 +2,6 @@
 import { getBenchmarks } from '@/lib/actions';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { StatsCharts } from '@/components/stats-charts';
-import { StatsDashboard } from '@/components/stats-dashboard';
-import { Separator } from '@/components/ui/separator';
 
 export default async function StatsPage() {
   const benchmarks = await getBenchmarks();
@@ -25,11 +23,7 @@ export default async function StatsPage() {
                 </CardContent>
             </Card>
         ) : (
-            <>
-                <StatsCharts benchmarks={benchmarks} />
-                <Separator />
-                <StatsDashboard benchmarks={benchmarks} primaryMarkets={primaryMarkets} />
-            </>
+            <StatsCharts benchmarks={benchmarks} primaryMarkets={primaryMarkets} />
         )}
     </div>
   );
