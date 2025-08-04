@@ -318,7 +318,7 @@ const BooleanDetailItem = ({ icon: Icon, label, value }: { icon: React.ElementTy
                     <DetailItem icon={Tags} label="Keywords">
                          {benchmark.tags.length > 0 ? (
                             <div className="flex flex-wrap gap-1">
-                                {benchmark.tags.map(t => <Badge key={t} variant="secondary">{t}</Badge>)}
+                                {benchmark.tags.map((t, i) => <Badge key={`${t}-${i}`} variant="secondary">{t}</Badge>)}
                             </div>
                          ) : 'N/A'}
                     </DetailItem>
@@ -466,7 +466,7 @@ const BooleanDetailItem = ({ icon: Icon, label, value }: { icon: React.ElementTy
                 </TableCell>
                 <TableCell className="max-w-sm">
                     <div className="flex flex-wrap gap-1">
-                        {b.tags?.slice(0, 3).map((tag) => <Badge key={tag} variant="outline">{tag}</Badge>)}
+                        {b.tags?.slice(0, 3).map((tag, index) => <Badge key={`${tag}-${index}`} variant="outline">{tag}</Badge>)}
                         {b.tags?.length > 3 && <Badge variant="outline">+{b.tags.length-3}</Badge>}
                     </div>
                 </TableCell>
