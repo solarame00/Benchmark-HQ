@@ -39,14 +39,12 @@ export function StatsDashboard({ benchmarks, primaryMarkets }: StatsDashboardPro
 
   const topByScore = useMemo(() => {
     return [...filteredBenchmarks]
-      .sort((a, b) => (b.score || 0) - (a.score || 0))
-      .slice(0, 10);
+      .sort((a, b) => (b.score || 0) - (a.score || 0));
   }, [filteredBenchmarks]);
 
   const topByTraffic = useMemo(() => {
     return [...filteredBenchmarks]
-      .sort((a, b) => (b.organicTraffic || 0) - (a.organicTraffic || 0))
-      .slice(0, 10);
+      .sort((a, b) => (b.organicTraffic || 0) - (a.organicTraffic || 0));
   }, [filteredBenchmarks]);
 
   return (
@@ -80,7 +78,7 @@ export function StatsDashboard({ benchmarks, primaryMarkets }: StatsDashboardPro
       <div className="grid grid-cols-1 gap-8 lg:grid-cols-2">
         <Card>
             <CardHeader>
-                <CardTitle>Top 10 by Score</CardTitle>
+                <CardTitle>Ranking by Score</CardTitle>
             </CardHeader>
             <CardContent>
                  <RankingTable 
@@ -92,14 +90,13 @@ export function StatsDashboard({ benchmarks, primaryMarkets }: StatsDashboardPro
         </Card>
         <Card>
             <CardHeader>
-                <CardTitle>Top 10 by Traffic (Monthly)</CardTitle>
+                <CardTitle>Ranking by Traffic (Monthly)</CardTitle>
             </CardHeader>
             <CardContent>
                  <RankingTable 
                     benchmarks={topByTraffic}
                     valueKey="organicTraffic"
                     valueLabel="Traffic"
-                    valueSuffix="K"
                 />
             </CardContent>
         </Card>

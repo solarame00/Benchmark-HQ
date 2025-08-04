@@ -14,10 +14,9 @@ type RankingTableProps = {
   benchmarks: Benchmark[];
   valueKey: 'score' | 'organicTraffic';
   valueLabel: string;
-  valueSuffix?: string;
 };
 
-export function RankingTable({ benchmarks, valueKey, valueLabel, valueSuffix = '' }: RankingTableProps) {
+export function RankingTable({ benchmarks, valueKey, valueLabel }: RankingTableProps) {
 
   const getHostname = (url: string) => {
     if (!url || !url.startsWith('http')) return url || 'No URL';
@@ -53,7 +52,7 @@ export function RankingTable({ benchmarks, valueKey, valueLabel, valueSuffix = '
                 </a>
               </TableCell>
               <TableCell className="text-right font-semibold tabular-nums">
-                {b[valueKey]?.toLocaleString() || '0'}{valueSuffix}
+                {b[valueKey]?.toLocaleString() || '0'}
               </TableCell>
             </TableRow>
           ))}

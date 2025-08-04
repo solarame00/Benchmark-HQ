@@ -49,7 +49,7 @@ export function StatsCharts({ benchmarks }: { benchmarks: Benchmark[] }) {
       .map(b => ({
         name: getHostname(b.url),
         Score: b.score,
-        'Traffic (K)': b.organicTraffic,
+        'Traffic': b.organicTraffic,
       }));
   }, [benchmarks]);
 
@@ -93,7 +93,7 @@ export function StatsCharts({ benchmarks }: { benchmarks: Benchmark[] }) {
                   <Tooltip />
                   <Legend verticalAlign="top" />
                   <Bar yAxisId="left" dataKey="Score" fill={PALETTE[0]} />
-                  <Bar yAxisId="right" dataKey="Traffic (K)" fill={PALETTE[1]} />
+                  <Bar yAxisId="right" dataKey="Traffic" fill={PALETTE[1]} />
                 </BarChart>
               </ResponsiveContainer>
             </div>

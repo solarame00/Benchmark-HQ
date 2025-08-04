@@ -116,7 +116,7 @@ export function BenchmarkCard({ benchmark, isSelected, onSelect, onViewDetails, 
                     </div>
                     <div className="flex items-center justify-between">
                         <span className="text-muted-foreground">Traffic</span>
-                        <span>{benchmark.organicTraffic || 0}K</span>
+                        <span>{benchmark.organicTraffic || 0}</span>
                     </div>
                 </CardContent>
                 <CardFooter>

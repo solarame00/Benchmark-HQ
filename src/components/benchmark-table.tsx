@@ -134,7 +134,7 @@ export function BenchmarkTable({
         return <a href={value} target="_blank" rel="noopener noreferrer" className="hover:underline text-primary break-all">{value}</a>
     }
     if (key === 'organicTraffic' && typeof value === 'number') {
-        return `${value.toLocaleString()}K`;
+        return value.toLocaleString();
     }
      if (key === 'pricing' && typeof value === 'object' && value !== null) {
         const pricing = value as Pricing;
@@ -218,7 +218,7 @@ const BooleanDetailItem = ({ icon: Icon, label, value }: { icon: React.ElementTy
                 </CardHeader>
                 <CardContent className="space-y-4">
                     <DetailItem icon={TrendingUp} label="Organic Traffic">
-                      {benchmark.organicTraffic ? `${benchmark.organicTraffic.toLocaleString()}K` : 'N/A'}
+                      {benchmark.organicTraffic ? `${benchmark.organicTraffic.toLocaleString()}` : 'N/A'}
                     </DetailItem>
                     <DetailItem icon={MapPin} label="Primary Market">
                       {benchmark.primaryMarket || 'N/A'}
