@@ -52,7 +52,7 @@ export function RankingTable({ benchmarks, valueKey, valueLabel }: RankingTableP
                 </a>
               </TableCell>
               <TableCell className="text-right font-semibold tabular-nums">
-                {b[valueKey]?.toLocaleString() || '0'}
+                {b[valueKey] || '0'}
               </TableCell>
             </TableRow>
           ))}
