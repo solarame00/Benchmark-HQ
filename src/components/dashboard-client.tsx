@@ -24,6 +24,7 @@ import Link from 'next/link';
 import { Skeleton } from './ui/skeleton';
 import { Checkbox } from './ui/checkbox';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from './ui/alert-dialog';
+import { generateBenchmark } from '@/ai/flows/generate-benchmark-flow';
 
 const BenchmarkForm = dynamic(() => import('@/components/benchmark-form').then(mod => mod.BenchmarkForm), {
   loading: () => (
@@ -61,8 +62,10 @@ export function DashboardClient({ initialBenchmarks, initialMarketCounts }: Dash
   const [viewingBenchmark, setViewingBenchmark] = useState<Benchmark | null>(null);
   const [selectedBenchmarks, setSelectedBenchmarks] = useState<string[]>([]);
   
-  const [selectedMarket, setSelectedMarket] = useState<string | null>(searchParams.get('market'));
+  const [selectedMarket, setSelectedMarket] = useState<string | null>(null);
   const [globalSearchTerm, setGlobalSearchTerm] = useState('');
+  const [isGenerating, setIsGenerating] = useState(false);
+  const [urlToAdd, setUrlToAdd] = useState('');
 
 
   const [filters, setFilters] = useState({
@@ -86,12 +89,9 @@ export function DashboardClient({ initialBenchmarks, initialMarketCounts }: Dash
   const showFormParam = searchParams.get('showForm') === 'true';
 
   useEffect(() => {
+    // This effect ensures client-side state is synced with URL state on mount
     const market = searchParams.get('market');
-    if (market) {
-      setSelectedMarket(market);
-    } else {
-      setSelectedMarket(null);
-    }
+    setSelectedMarket(market);
     
     if (searchParams.get('showForm') !== 'true') {
         setEditingBenchmark(null);
@@ -99,7 +99,7 @@ export function DashboardClient({ initialBenchmarks, initialMarketCounts }: Dash
   }, [searchParams]);
 
   
-  const updateURL = (params: Record<string, string | null>) => {
+  const updateURL = (params: Record<string, string | null | undefined>) => {
     const current = new URL(window.location.href);
     for(const key in params) {
         const value = params[key];
@@ -116,11 +116,32 @@ export function DashboardClient({ initialBenchmarks, initialMarketCounts }: Dash
     updateURL({ market });
   };
 
-  const handleAddNew = () => {
-    setEditingBenchmark(null);
-    setViewingBenchmark(null);
-    updateURL({ showForm: 'true' });
-  }
+  const handleAddNewFromUrl = async () => {
+    if (!urlToAdd || !urlToAdd.startsWith('http')) {
+        toast({
+            variant: 'destructive',
+            title: 'Invalid URL',
+            description: 'Please enter a valid URL (e.g., https://example.com).',
+        });
+        return;
+    }
+    setIsGenerating(true);
+    try {
+        const generatedData = await generateBenchmark(urlToAdd);
+        setEditingBenchmark({ ...generatedData, url: urlToAdd } as Benchmark);
+        updateURL({ showForm: 'true' });
+    } catch (error) {
+        console.error("Failed to generate benchmark:", error);
+        toast({
+            variant: "destructive",
+            title: "AI Generation Failed",
+            description: "Could not generate benchmark from URL. Please try again or add manually.",
+        });
+    } finally {
+        setIsGenerating(false);
+        setUrlToAdd('');
+    }
+};
 
   const handleEdit = (benchmark: Benchmark) => {
     setEditingBenchmark(benchmark);
@@ -201,29 +222,31 @@ export function DashboardClient({ initialBenchmarks, initialMarketCounts }: Dash
 
   const filteredAndSortedBenchmarks = useMemo(() => {
     let sourceData = benchmarks;
-    let currentSearchTerm = searchTerm;
-    let isGlobalSearch = false;
-
+    
+    // Global search takes precedence
     if (globalSearchTerm) {
-      currentSearchTerm = globalSearchTerm;
-      isGlobalSearch = true;
-    } else if (selectedMarket) {
+         return sourceData.filter((b) => {
+            return globalSearchTerm === '' ||
+                (b.url.toLowerCase().includes(globalSearchTerm.toLowerCase()) ||
+                b.notes?.toLowerCase().includes(globalSearchTerm.toLowerCase()) ||
+                b.tags?.some(t => t.toLowerCase().includes(globalSearchTerm.toLowerCase())));
+        });
+    }
+
+    // If a market is selected, filter by it first
+    if (selectedMarket) {
       sourceData = benchmarks.filter(b => b.primaryMarket === selectedMarket);
     } else {
-        // When no market is selected, and no global search, return the source data for the market selection view
+        // When no market is selected, and no global search, return the market counts data
         return sourceData;
     }
     
     let filtered = sourceData.filter((b) => {
       const searchMatch =
-        currentSearchTerm === '' ||
-        (b.url.toLowerCase().includes(currentSearchTerm.toLowerCase()) ||
-        b.notes?.toLowerCase().includes(currentSearchTerm.toLowerCase()) ||
-        b.tags?.some(t => t.toLowerCase().includes(currentSearchTerm.toLowerCase())));
-
-      if (isGlobalSearch) {
-        return searchMatch;
-      }
+        searchTerm === '' ||
+        (b.url.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        b.notes?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        b.tags?.some(t => t.toLowerCase().includes(searchTerm.toLowerCase())));
       
       const marketMatch = filters.primaryMarket === 'all' || b.primaryMarket === filters.primaryMarket;
       const offerTrialMatch = !booleanFilters.offerTrial || b.offerTrial;
@@ -261,6 +284,12 @@ export function DashboardClient({ initialBenchmarks, initialMarketCounts }: Dash
 
   const handleViewDetails = (benchmark: Benchmark) => {
     if (showFormParam) return;
+
+    if (globalSearchTerm) {
+        // If we are in a global search context, first navigate to the market
+        updateURL({ market: benchmark.primaryMarket, showForm: undefined });
+    }
+    
     setViewingBenchmark(benchmark);
   }
 
@@ -284,24 +313,33 @@ export function DashboardClient({ initialBenchmarks, initialMarketCounts }: Dash
   if (!selectedMarket) {
      return (
         <div className="flex flex-col gap-6">
-            <div className="flex items-center justify-between gap-4 flex-wrap">
+            <header className="sticky top-0 z-30 flex h-14 items-center gap-4 border-b bg-background/95 px-4 backdrop-blur-sm sm:h-auto sm:border-0 sm:bg-transparent sm:px-6">
                  <div className="flex-grow max-w-lg">
                     <div className="relative">
                         <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                         <Input
                             type="search"
-                            placeholder="Search all benchmarks by URL, notes, or keywords..."
-                            className="w-full pl-9"
+                            placeholder="Search all benchmarks..."
+                            className="w-full rounded-lg bg-background pl-8"
                             value={globalSearchTerm}
                             onChange={(e) => setGlobalSearchTerm(e.target.value)}
                         />
                     </div>
                 </div>
-                <Button onClick={handleAddNew}>
-                    <PlusCircle className="mr-2 h-4 w-4" />
-                    Add New
-                </Button>
-            </div>
+                 <div className="flex items-center gap-2">
+                    <Input 
+                        type="url"
+                        placeholder="Add from URL..."
+                        className="hidden md:flex h-9 w-auto"
+                        value={urlToAdd}
+                        onChange={e => setUrlToAdd(e.target.value)}
+                        onKeyDown={e => e.key === 'Enter' && handleAddNewFromUrl()}
+                    />
+                    <Button onClick={handleAddNewFromUrl} disabled={isGenerating}>
+                        {isGenerating ? 'Generating...' : 'Add'}
+                    </Button>
+                </div>
+            </header>
             
             {loading ? (
                 <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5">
@@ -320,7 +358,7 @@ export function DashboardClient({ initialBenchmarks, initialMarketCounts }: Dash
             ) : null}
 
             {!loading && !globalSearchTerm && (
-                <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5">
+                <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 p-4 sm:p-6">
                     {marketCounts.map(market => (
                         <Card key={market.name} onClick={() => handleMarketSelect(market.name)} className="cursor-pointer hover:shadow-lg transition-shadow duration-300 hover:ring-2 hover:ring-primary">
                             <CardHeader>
@@ -339,7 +377,7 @@ export function DashboardClient({ initialBenchmarks, initialMarketCounts }: Dash
             )}
             
             {globalSearchTerm && (
-                <div className="flex flex-col gap-4">
+                <div className="flex flex-col gap-4 p-4 sm:p-6">
                      <h2 className="text-2xl font-bold tracking-tight">Global Search Results</h2>
                     {filteredAndSortedBenchmarks.length > 0 ? (
                          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
@@ -391,10 +429,6 @@ export function DashboardClient({ initialBenchmarks, initialMarketCounts }: Dash
                     <Table className="h-4 w-4" />
                  </ToggleGroupItem>
             </ToggleGroup>
-            <Button onClick={handleAddNew}>
-            <PlusCircle className="mr-2 h-4 w-4" />
-            Add New
-            </Button>
         </div>
       </div>
 
