@@ -11,7 +11,7 @@ const PALETTE = ['#3F51B5', '#009688', '#FFC107', '#FF5722', '#607D8B', '#9C27B0
 const PIE_PALETTE = ['#3F51B5', '#009688', '#FFC107', '#FF5722'];
 
 export function StatsCharts({ benchmarks }: { benchmarks: Benchmark[] }) {
-  const [chartViewMode, setChartViewMode] = useState('all');
+  const [chartViewMode, setChartViewMode] = useState('top10_traffic');
 
   const getHostname = (url: string) => {
     if (!url || !url.startsWith('http')) {
@@ -50,9 +50,9 @@ export function StatsCharts({ benchmarks }: { benchmarks: Benchmark[] }) {
   const scoreAndTrafficData = useMemo(() => {
     let filteredBenchmarks = benchmarks;
 
-    if (chartViewMode === 'top10_score') {
+    if (chartViewMode === 'top10_traffic') {
         filteredBenchmarks = [...benchmarks]
-            .sort((a, b) => (b.score || 0) - (a.score || 0))
+            .sort((a, b) => (b.organicTraffic || 0) - (a.organicTraffic || 0))
             .slice(0, 10);
     } else if (chartViewMode !== 'all') {
         filteredBenchmarks = benchmarks.filter(b => b.primaryMarket === chartViewMode);
@@ -103,8 +103,8 @@ export function StatsCharts({ benchmarks }: { benchmarks: Benchmark[] }) {
                         <SelectValue placeholder="Filter view..." />
                     </SelectTrigger>
                     <SelectContent>
+                        <SelectItem value="top10_traffic">Top 10 by Traffic</SelectItem>
                         <SelectItem value="all">All Markets</SelectItem>
-                        <SelectItem value="top10_score">Top 10 by Score</SelectItem>
                         {primaryMarkets.map(market => (
                             <SelectItem key={market} value={market}>{market}</SelectItem>
                         ))}
