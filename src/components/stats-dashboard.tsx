@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import { useState, useMemo } from 'react';
@@ -15,6 +16,7 @@ import {
 import { Button } from '@/components/ui/button';
 import { ChevronDown, ChevronsUpDown } from 'lucide-react';
 import { Card, CardHeader, CardTitle, CardContent } from './ui/card';
+import { useBenchmarkContext } from '@/app/(app)/layout';
 
 type StatsDashboardProps = {
   benchmarks: Benchmark[];
@@ -22,6 +24,7 @@ type StatsDashboardProps = {
 };
 
 export function StatsDashboard({ benchmarks, primaryMarkets }: StatsDashboardProps) {
+  const { setViewingBenchmark } = useBenchmarkContext();
   const [selectedMarketsForScore, setSelectedMarketsForScore] = useState<string[]>([]);
   const [selectedMarketsForTraffic, setSelectedMarketsForTraffic] = useState<string[]>([]);
 
@@ -121,6 +124,7 @@ export function StatsDashboard({ benchmarks, primaryMarkets }: StatsDashboardPro
                     benchmarks={displayedTopByScore}
                     valueKey="score"
                     valueLabel="Score"
+                    onRowClick={setViewingBenchmark}
                  />
                  {topByScore.length > 5 && (
                     <div className="text-center">
@@ -147,6 +151,7 @@ export function StatsDashboard({ benchmarks, primaryMarkets }: StatsDashboardPro
                     benchmarks={displayedTopByTraffic}
                     valueKey="organicTraffic"
                     valueLabel="Traffic"
+                    onRowClick={setViewingBenchmark}
                 />
                  {topByTraffic.length > 5 && (
                     <div className="text-center">

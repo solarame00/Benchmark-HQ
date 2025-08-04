@@ -9,14 +9,16 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import { Globe } from 'lucide-react';
+import { cn } from '@/lib/utils';
 
 type RankingTableProps = {
   benchmarks: Benchmark[];
   valueKey: 'score' | 'organicTraffic';
   valueLabel: string;
+  onRowClick?: (benchmark: Benchmark) => void;
 };
 
-export function RankingTable({ benchmarks, valueKey, valueLabel }: RankingTableProps) {
+export function RankingTable({ benchmarks, valueKey, valueLabel, onRowClick }: RankingTableProps) {
 
   const getHostname = (url: string) => {
     if (!url || !url.startsWith('http')) return url || 'No URL';
@@ -43,13 +45,17 @@ export function RankingTable({ benchmarks, valueKey, valueLabel }: RankingTableP
         </TableHeader>
         <TableBody>
           {benchmarks.map((b, index) => (
-            <TableRow key={b.id}>
+            <TableRow 
+              key={b.id} 
+              onClick={() => onRowClick?.(b)}
+              className={cn(onRowClick && "cursor-pointer")}
+            >
               <TableCell className="font-medium">{index + 1}</TableCell>
               <TableCell className="font-medium max-w-xs truncate">
-                <a href={b.url} target="_blank" rel="noopener noreferrer" className="hover:underline flex items-center gap-2">
+                 <div className="flex items-center gap-2">
                   <Globe className="h-4 w-4 text-muted-foreground flex-shrink-0" />
                   {getHostname(b.url)}
-                </a>
+                </div>
               </TableCell>
               <TableCell className="text-right font-semibold tabular-nums">
                 {b[valueKey] || '0'}

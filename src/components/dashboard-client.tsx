@@ -15,7 +15,6 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { DropdownMenu, DropdownMenuCheckboxItem, DropdownMenuContent, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
-import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from '@/components/ui/sheet';
 import type { DropdownMenuCheckboxItemProps } from "@radix-ui/react-dropdown-menu"
 import { PAYMENT_STRATEGIES, PAYMENT_METHODS, CONNECTION_OPTIONS } from '@/lib/constants';
 import { MissingApiKeyAlert } from '@/components/missing-api-key-alert';
@@ -25,6 +24,7 @@ import { Skeleton } from './ui/skeleton';
 import { Checkbox } from './ui/checkbox';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from './ui/alert-dialog';
 import { generateBenchmark } from '@/ai/flows/generate-benchmark-flow';
+import { useBenchmarkContext } from '@/app/(app)/layout';
 
 const BenchmarkForm = dynamic(() => import('@/components/benchmark-form').then(mod => mod.BenchmarkForm), {
   loading: () => (
@@ -54,12 +54,12 @@ export function DashboardClient({ initialBenchmarks, initialMarketCounts }: Dash
   const router = useRouter();
   const searchParams = useSearchParams();
   const { toast } = useToast();
+  const { setViewingBenchmark } = useBenchmarkContext();
 
   const [benchmarks, setBenchmarks] = useState<Benchmark[]>(initialBenchmarks);
   const [marketCounts, setMarketCounts] = useState(initialMarketCounts);
   const [loading, setLoading] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
-  const [viewingBenchmark, setViewingBenchmark] = useState<Benchmark | null>(null);
   const [selectedBenchmarks, setSelectedBenchmarks] = useState<string[]>([]);
   
   const [selectedMarket, setSelectedMarket] = useState<string | null>(null);
@@ -96,7 +96,24 @@ export function DashboardClient({ initialBenchmarks, initialMarketCounts }: Dash
     if (searchParams.get('showForm') !== 'true') {
         setEditingBenchmark(null);
     }
-  }, [searchParams]);
+
+    const editId = searchParams.get('editId');
+    const cloneId = searchParams.get('cloneId');
+
+    if (editId) {
+        const benchmarkToEdit = benchmarks.find(b => b.id === editId);
+        if (benchmarkToEdit) {
+            setEditingBenchmark(benchmarkToEdit);
+        }
+    } else if (cloneId) {
+        const benchmarkToClone = benchmarks.find(b => b.id === cloneId);
+        if (benchmarkToClone) {
+             const { id, ...clonedData } = benchmarkToClone;
+             setEditingBenchmark({ ...clonedData, id: '' } as Benchmark);
+        }
+    }
+
+  }, [searchParams, benchmarks]);
 
   
   const updateURL = (params: Record<string, string | null | undefined>) => {
@@ -113,7 +130,7 @@ export function DashboardClient({ initialBenchmarks, initialMarketCounts }: Dash
   };
   
   const handleMarketSelect = (market: string | null) => {
-    updateURL({ market });
+    updateURL({ market, showForm: null, editId: null, cloneId: null });
   };
 
   const handleAddNewFromUrl = async () => {
@@ -129,7 +146,7 @@ export function DashboardClient({ initialBenchmarks, initialMarketCounts }: Dash
     try {
         const generatedData = await generateBenchmark(urlToAdd);
         setEditingBenchmark({ ...generatedData, url: urlToAdd } as Benchmark);
-        updateURL({ showForm: 'true' });
+        updateURL({ showForm: 'true', editId: null, cloneId: null });
     } catch (error) {
         console.error("Failed to generate benchmark:", error);
         toast({
@@ -146,14 +163,14 @@ export function DashboardClient({ initialBenchmarks, initialMarketCounts }: Dash
   const handleEdit = (benchmark: Benchmark) => {
     setEditingBenchmark(benchmark);
     setViewingBenchmark(null);
-    updateURL({ showForm: 'true' });
+    updateURL({ showForm: 'true', editId: benchmark.id, cloneId: null });
   }
 
   const handleClone = (benchmark: Benchmark) => {
     const { id, ...clonedData } = benchmark;
     setEditingBenchmark({ ...clonedData, id: '' } as Benchmark);
     setViewingBenchmark(null);
-    updateURL({ showForm: 'true' });
+    updateURL({ showForm: 'true', cloneId: benchmark.id, editId: null });
   };
 
 
@@ -162,9 +179,7 @@ export function DashboardClient({ initialBenchmarks, initialMarketCounts }: Dash
       await deleteBenchmark(id);
       toast({ title: 'Success', description: 'Benchmark deleted successfully.' });
       setBenchmarks(prev => prev.filter(b => b.id !== id));
-      if (viewingBenchmark?.id === id) {
-        setViewingBenchmark(null);
-      }
+      
       setSelectedBenchmarks(prev => prev.filter(selectedId => selectedId !== id));
     } catch (error) {
        console.error("Failed to delete benchmark:", error);
@@ -177,7 +192,8 @@ export function DashboardClient({ initialBenchmarks, initialMarketCounts }: Dash
   }
   
   const handleCancelForm = () => {
-    updateURL({ showForm: null });
+    setEditingBenchmark(null);
+    updateURL({ showForm: null, editId: null, cloneId: null });
   }
 
   const handleSave = async (data: BenchmarkInput, id: string) => {
@@ -284,12 +300,6 @@ export function DashboardClient({ initialBenchmarks, initialMarketCounts }: Dash
 
   const handleViewDetails = (benchmark: Benchmark) => {
     if (showFormParam) return;
-
-    if (globalSearchTerm) {
-        // If we are in a global search context, first navigate to the market
-        updateURL({ market: benchmark.primaryMarket, showForm: undefined });
-    }
-    
     setViewingBenchmark(benchmark);
   }
 
@@ -568,24 +578,6 @@ export function DashboardClient({ initialBenchmarks, initialMarketCounts }: Dash
                 />
             ))}
         </div>
-      )}
-
-      {viewingBenchmark && (
-        <Sheet open={!!viewingBenchmark} onOpenChange={(isOpen) => !isOpen && setViewingBenchmark(null)}>
-            <SheetContent className="w-full sm:max-w-xl md:max-w-2xl overflow-y-auto">
-                <SheetHeader className="mb-6 text-left">
-                    <SheetTitle>Benchmark Details</SheetTitle>
-                     <a href={viewingBenchmark.url} target="_blank" rel="noopener noreferrer" className="text-sm text-primary hover:underline truncate">{viewingBenchmark.url}</a>
-                </SheetHeader>
-                <BenchmarkTable
-                    benchmarks={[viewingBenchmark]}
-                    onEdit={(b) => { setViewingBenchmark(null); handleEdit(b); }}
-                    onClone={(b) => { setViewingBenchmark(null); handleClone(b); }}
-                    onDelete={(id) => { setViewingBenchmark(null); handleDelete(id); }}
-                    isDetailsView={true}
-                />
-            </SheetContent>
-        </Sheet>
       )}
 
       {!loading && filteredAndSortedBenchmarks.length > 0 && viewMode === 'table' && (
