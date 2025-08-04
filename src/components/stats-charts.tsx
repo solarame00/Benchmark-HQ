@@ -1,15 +1,17 @@
 
 'use client';
 
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 import type { Benchmark } from '@/lib/types';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
 const PALETTE = ['#3F51B5', '#009688', '#FFC107', '#FF5722', '#607D8B', '#9C27B0'];
 const PIE_PALETTE = ['#3F51B5', '#009688', '#FFC107', '#FF5722'];
 
 export function StatsCharts({ benchmarks }: { benchmarks: Benchmark[] }) {
+  const [chartViewMode, setChartViewMode] = useState('all');
 
   const getHostname = (url: string) => {
     if (!url || !url.startsWith('http')) {
@@ -23,10 +25,14 @@ export function StatsCharts({ benchmarks }: { benchmarks: Benchmark[] }) {
     }
   };
 
+  const primaryMarkets = useMemo(() => Array.from(new Set(benchmarks.map(b => b.primaryMarket).filter(Boolean))).sort(), [benchmarks]);
+
   const marketDistribution = useMemo(() => {
     const counts: { [key: string]: number } = {};
     benchmarks.forEach(b => {
-      counts[b.primaryMarket] = (counts[b.primaryMarket] || 0) + 1;
+      if (b.primaryMarket) {
+        counts[b.primaryMarket] = (counts[b.primaryMarket] || 0) + 1;
+      }
     });
     return Object.entries(counts).map(([name, value]) => ({ name, value })).sort((a, b) => b.value - a.value);
   }, [benchmarks]);
@@ -42,8 +48,17 @@ export function StatsCharts({ benchmarks }: { benchmarks: Benchmark[] }) {
   }, [benchmarks]);
   
   const scoreAndTrafficData = useMemo(() => {
-    return benchmarks
-      .filter(b => (b.score || 0) > 0 || (b.organicTraffic || 0) > 0)
+    let filteredBenchmarks = benchmarks;
+
+    if (chartViewMode === 'top10_score') {
+        filteredBenchmarks = [...benchmarks]
+            .sort((a, b) => (b.score || 0) - (a.score || 0))
+            .slice(0, 10);
+    } else if (chartViewMode !== 'all') {
+        filteredBenchmarks = benchmarks.filter(b => b.primaryMarket === chartViewMode);
+    }
+    
+    return filteredBenchmarks
       .slice()
       .sort((a, b) => (b.score || 0) - (a.score || 0))
       .map(b => ({
@@ -51,7 +66,7 @@ export function StatsCharts({ benchmarks }: { benchmarks: Benchmark[] }) {
         Score: b.score,
         'Traffic': b.organicTraffic,
       }));
-  }, [benchmarks]);
+  }, [benchmarks, chartViewMode]);
 
   const paymentStrategyDistribution = useMemo(() => {
     const counts: { [key: string]: number } = {};
@@ -78,8 +93,24 @@ export function StatsCharts({ benchmarks }: { benchmarks: Benchmark[] }) {
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
         <Card className="md:col-span-2 lg:col-span-3">
           <CardHeader>
-            <CardTitle>Score vs. Organic Traffic</CardTitle>
-            <CardDescription>Comparing competitor scores and their monthly organic traffic.</CardDescription>
+            <div className="flex flex-col sm:flex-row justify-between sm:items-center gap-4">
+                <div>
+                    <CardTitle>Score vs. Organic Traffic</CardTitle>
+                    <CardDescription>Comparing competitor scores and their monthly organic traffic.</CardDescription>
+                </div>
+                <Select onValueChange={setChartViewMode} defaultValue={chartViewMode}>
+                    <SelectTrigger className="w-full sm:w-[200px]">
+                        <SelectValue placeholder="Filter view..." />
+                    </SelectTrigger>
+                    <SelectContent>
+                        <SelectItem value="all">All Markets</SelectItem>
+                        <SelectItem value="top10_score">Top 10 by Score</SelectItem>
+                        {primaryMarkets.map(market => (
+                            <SelectItem key={market} value={market}>{market}</SelectItem>
+                        ))}
+                    </SelectContent>
+                </Select>
+            </div>
           </CardHeader>
           <CardContent>
             {/* Desktop View Chart */}
