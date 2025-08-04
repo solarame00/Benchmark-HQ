@@ -16,9 +16,10 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
 
   const handleAddNewClick = (e: React.MouseEvent<HTMLAnchorElement>) => {
     e.preventDefault();
-    const current = new URL(window.location.href);
-    current.searchParams.set('showForm', 'true');
-    router.push(current.toString(), { scroll: false });
+    // Always navigate to the root page to show the form.
+    const newUrl = new URL('/', window.location.origin);
+    newUrl.searchParams.set('showForm', 'true');
+    router.push(newUrl.toString(), { scroll: false });
   }
 
   const isAddActive = searchParams.get('showForm') === 'true';
