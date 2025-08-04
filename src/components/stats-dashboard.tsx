@@ -13,7 +13,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { Button } from '@/components/ui/button';
-import { ChevronDown } from 'lucide-react';
+import { ChevronDown, ChevronsUpDown } from 'lucide-react';
 import { Card, CardHeader, CardTitle, CardContent } from './ui/card';
 
 type StatsDashboardProps = {
@@ -24,6 +24,9 @@ type StatsDashboardProps = {
 export function StatsDashboard({ benchmarks, primaryMarkets }: StatsDashboardProps) {
   const [selectedMarketsForScore, setSelectedMarketsForScore] = useState<string[]>([]);
   const [selectedMarketsForTraffic, setSelectedMarketsForTraffic] = useState<string[]>([]);
+
+  const [isScoreTableExpanded, setIsScoreTableExpanded] = useState(false);
+  const [isTrafficTableExpanded, setIsTrafficTableExpanded] = useState(false);
 
   const handleMarketFilterChangeForScore = (market: string) => (checked: boolean) => {
     setSelectedMarketsForScore(prev =>
@@ -61,6 +64,15 @@ export function StatsDashboard({ benchmarks, primaryMarkets }: StatsDashboardPro
     return [...filteredBenchmarksForTraffic]
       .sort((a, b) => (b.organicTraffic || 0) - (a.organicTraffic || 0));
   }, [filteredBenchmarksForTraffic]);
+
+  const displayedTopByScore = useMemo(() => {
+    return isScoreTableExpanded ? topByScore : topByScore.slice(0, 5);
+  }, [topByScore, isScoreTableExpanded]);
+
+  const displayedTopByTraffic = useMemo(() => {
+    return isTrafficTableExpanded ? topByTraffic : topByTraffic.slice(0, 5);
+  }, [topByTraffic, isTrafficTableExpanded]);
+
 
   const renderFilterDropdown = (
     selectedMarkets: string[], 
@@ -104,12 +116,23 @@ export function StatsDashboard({ benchmarks, primaryMarkets }: StatsDashboardPro
                     {renderFilterDropdown(selectedMarketsForScore, handleMarketFilterChangeForScore)}
                 </div>
             </CardHeader>
-            <CardContent>
+            <CardContent className="space-y-4">
                  <RankingTable 
-                    benchmarks={topByScore}
+                    benchmarks={displayedTopByScore}
                     valueKey="score"
                     valueLabel="Score"
                  />
+                 {topByScore.length > 5 && (
+                    <div className="text-center">
+                        <Button
+                            variant="link"
+                            onClick={() => setIsScoreTableExpanded(!isScoreTableExpanded)}
+                        >
+                            <ChevronsUpDown className="mr-2 h-4 w-4" />
+                            {isScoreTableExpanded ? 'Show Less' : `Show ${topByScore.length - 5} More`}
+                        </Button>
+                    </div>
+                 )}
             </CardContent>
         </Card>
         <Card>
@@ -119,12 +142,23 @@ export function StatsDashboard({ benchmarks, primaryMarkets }: StatsDashboardPro
                     {renderFilterDropdown(selectedMarketsForTraffic, handleMarketFilterChangeForTraffic)}
                 </div>
             </CardHeader>
-            <CardContent>
+            <CardContent className="space-y-4">
                  <RankingTable 
-                    benchmarks={topByTraffic}
+                    benchmarks={displayedTopByTraffic}
                     valueKey="organicTraffic"
                     valueLabel="Traffic"
                 />
+                 {topByTraffic.length > 5 && (
+                    <div className="text-center">
+                        <Button
+                            variant="link"
+                            onClick={() => setIsTrafficTableExpanded(!isTrafficTableExpanded)}
+                        >
+                             <ChevronsUpDown className="mr-2 h-4 w-4" />
+                            {isTrafficTableExpanded ? 'Show Less' : `Show ${topByTraffic.length - 5} More`}
+                        </Button>
+                    </div>
+                 )}
             </CardContent>
         </Card>
       </div>
