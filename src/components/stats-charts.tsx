@@ -38,7 +38,7 @@ export function StatsCharts({ benchmarks }: { benchmarks: Benchmark[] }) {
         'Has Resell Panel': benchmarks.filter(b => b.hasResellPanel).length,
         'Requires Account': benchmarks.filter(b => b.requiresAccount).length
      };
-     return Object.entries(features).map(([name, count]) => ({ name, count: value }));
+     return Object.entries(features).map(([name, count]) => ({ name, count }));
   }, [benchmarks]);
   
   const scoreAndTrafficData = useMemo(() => {
@@ -68,7 +68,7 @@ export function StatsCharts({ benchmarks }: { benchmarks: Benchmark[] }) {
     benchmarks.forEach(b => {
         b.paymentMethods?.forEach(method => {
             counts[method] = (counts[method] || 0) + 1;
-        })
+        });
     });
     return Object.entries(counts).map(([name, count]) => ({ name, count })).sort((a, b) => b.count - a.count);
   }, [benchmarks]);
