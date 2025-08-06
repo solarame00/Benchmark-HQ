@@ -23,7 +23,6 @@ import Link from 'next/link';
 import { Skeleton } from './ui/skeleton';
 import { Checkbox } from './ui/checkbox';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from './ui/alert-dialog';
-import { generateBenchmark } from '@/ai/flows/generate-benchmark-flow';
 import { useBenchmarkContext } from '@/app/(app)/layout';
 
 const BenchmarkForm = dynamic(() => import('@/components/benchmark-form').then(mod => mod.BenchmarkForm), {
@@ -64,8 +63,6 @@ export function DashboardClient({ initialBenchmarks, initialMarketCounts }: Dash
   
   const [selectedMarket, setSelectedMarket] = useState<string | null>(null);
   const [globalSearchTerm, setGlobalSearchTerm] = useState('');
-  const [isGenerating, setIsGenerating] = useState(false);
-  const [urlToAdd, setUrlToAdd] = useState('');
 
 
   const [filters, setFilters] = useState({
@@ -133,32 +130,6 @@ export function DashboardClient({ initialBenchmarks, initialMarketCounts }: Dash
     updateURL({ market, showForm: null, editId: null, cloneId: null });
   };
 
-  const handleAddNewFromUrl = async () => {
-    if (!urlToAdd || !urlToAdd.startsWith('http')) {
-        toast({
-            variant: 'destructive',
-            title: 'Invalid URL',
-            description: 'Please enter a valid URL (e.g., https://example.com).',
-        });
-        return;
-    }
-    setIsGenerating(true);
-    try {
-        const generatedData = await generateBenchmark(urlToAdd);
-        setEditingBenchmark({ ...generatedData, url: urlToAdd } as Benchmark);
-        updateURL({ showForm: 'true', editId: null, cloneId: null });
-    } catch (error) {
-        console.error("Failed to generate benchmark:", error);
-        toast({
-            variant: "destructive",
-            title: "AI Generation Failed",
-            description: "Could not generate benchmark from URL. Please try again or add manually.",
-        });
-    } finally {
-        setIsGenerating(false);
-        setUrlToAdd('');
-    }
-};
 
   const handleEdit = (benchmark: Benchmark) => {
     setEditingBenchmark(benchmark);
@@ -335,19 +306,6 @@ export function DashboardClient({ initialBenchmarks, initialMarketCounts }: Dash
                             onChange={(e) => setGlobalSearchTerm(e.target.value)}
                         />
                     </div>
-                </div>
-                 <div className="flex items-center gap-2">
-                    <Input 
-                        type="url"
-                        placeholder="Add from URL..."
-                        className="hidden md:flex h-9 w-auto"
-                        value={urlToAdd}
-                        onChange={e => setUrlToAdd(e.target.value)}
-                        onKeyDown={e => e.key === 'Enter' && handleAddNewFromUrl()}
-                    />
-                    <Button onClick={handleAddNewFromUrl} disabled={isGenerating}>
-                        {isGenerating ? 'Generating...' : 'Add'}
-                    </Button>
                 </div>
             </header>
             
