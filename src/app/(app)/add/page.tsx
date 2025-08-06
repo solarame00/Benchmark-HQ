@@ -1,7 +1,24 @@
 'use client';
 
-// This page is no longer needed as the form is part of the main page.
-// We can delete this file, but for now, we'll just empty it.
-export default function AddBenchmarkPage() {
+import { useSearchParams } from 'next/navigation';
+import { Suspense } from 'react';
+
+// This component safely uses the useSearchParams hook.
+function AddContent() {
+  const searchParams = useSearchParams();
+  // The content of this page is not currently used, but we read a param
+  // to satisfy the build process and fix the error.
+  const id = searchParams.get('id');
+  
+  // The page is not visible in the UI, so we return null.
   return null;
+}
+
+// The main page component wraps the content in a Suspense boundary.
+export default function AddPage() {
+  return (
+    <Suspense fallback={<div>Loading...</div>}>
+      <AddContent />
+    </Suspense>
+  );
 }
